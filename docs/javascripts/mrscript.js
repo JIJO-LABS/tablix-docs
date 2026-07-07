@@ -15,7 +15,7 @@
     const KEYWORDS = {
       keyword: [
         // top-level statements / blocks
-        "SOURCE", "APPEND", "JOIN", "WITH", "ON", "TYPE",
+        "SOURCE", "APPEND", "JOIN", "MERGE", "WITH", "ON", "TYPE", "PREFIX", "KEY",
         "CONFIG", "FORMAT", "VARIABLE", "DERIVE", "STACK", "SPREAD",
         "EDIT", "RECODE", "COMPUTE", "BANNER", "TABLE", "SCOPE",
         "EXPORT", "DATA", "SCHEMA", "CODEBOOK",
@@ -26,7 +26,7 @@
         // block closers
         "END", "ENDNET", "ENDHEADING", "ENDSCOPE",
         // structure
-        "STUB", "NET", "HEADING", "MAP", "FROM", "POSITIONS",
+        "STUB", "NET", "HEADING", "MAP", "FROM", "POSITIONS", "CODES",
         "AXIS", "AT", "COLUMN", "SECTION", "STUBS", "DISTRIBUTION", "ADD",
         // cross-table operations
         "ADDTAB", "BANKED_TABLE", "MANIP", "INDEX", "SHARE", "NAME", "TITLE",

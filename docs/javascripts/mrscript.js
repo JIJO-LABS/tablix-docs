@@ -16,7 +16,7 @@
       keyword: [
         // top-level statements / blocks
         "SOURCE", "APPEND", "JOIN", "MERGE", "WITH", "ON", "TYPE", "PREFIX", "KEY",
-        "CONFIG", "FORMAT", "VARIABLE", "DERIVE", "STACK", "SPREAD",
+        "CONFIG", "FORMAT", "VARIABLE", "DERIVE", "STACK", "SPREAD", "COMBINE",
         "EDIT", "RECODE", "COMPUTE", "BANNER", "TABLE", "SCOPE",
         "EXPORT", "DATA", "SCHEMA", "CODEBOOK",
         // AGGREGATE — roll exposure/diary rows up to respondent level

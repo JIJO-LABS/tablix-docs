@@ -20,8 +20,8 @@ Interpolation  {name}  {row.column}  {loop.index|count|first|last}
 ### Top-level statements
 
 ```text
-SOURCE  %RESPID  APPEND  JOIN  AGGREGATE  CONFIG  FORMAT  VARIABLE
-DERIVE  SPREAD  STACK  EDIT  RECODE  KEEP ROWS  DROP ROWS  COMPUTE  RIM
+SOURCE  %RESPID  APPEND  JOIN  MERGE  AGGREGATE  CONFIG  FORMAT  VARIABLE
+DERIVE  SPREAD  COMBINE  STACK  EDIT  RECODE  KEEP ROWS  DROP ROWS  COMPUTE  RIM
 BANNER (named)  TABLE  SCOPE  EXPORT DATA
 ADDTAB  BANKED_TABLE  MANIP                       (cross-table ops — reference stored tables by NAME)
 AUTOTAB … END AUTOTAB                             (one banner table per VARS()-selected codebook variable)
@@ -39,8 +39,9 @@ END TABLE    END BANNER   END DEFINE   END RIM   END AUTOTAB   ENDNET   ENDHEADI
 
 | Context | Clauses |
 |---------|---------|
-| `SOURCE` | `AS`  `DATA`  `CODEBOOK`  `SCHEMA`  (+ optional name) |
+| `SOURCE` | `AS`  `DATA`  `CODEBOOK`  `SCHEMA`  `SHEET`  (+ optional name) |
 | `JOIN` | `WITH`  `ON`  `%RESPID`  `TYPE` (left \| inner) |
+| `MERGE` | `AS`  `SHEET`  `ON`  `KEY`  `PREFIX`  `TYPE` (left \| inner) — chainable, in-script-order file join |
 | `CONFIG` | `OUTPUT`  `SIG_CONFIDENCE`  `SIG_CORRECTION` (none \| bonferroni \| bh)  `SIG_COMPARE`  `SIG_TAILS` (1 \| 2)  `SIG_MEAN_TEST` (exact_t \| normal)  `SIG_DEFF`  `MISSING_TREATMENT`  `DEFAULT_STATS`  `SUPPRESS_STACKED_SIG`  `SUPPRESS_GRID_SIG`  `SUPPRESS_WAVE_SIG` |
 | `FORMAT` / `TABLE` shared | `STATS`  `BANNER`  `WEIGHT`  `BASE_LABEL`  `FOOTER`  `THOUSANDS_SEPARATOR`  `MIN_BASE`  `CONFIDENTIAL`  `BLANK_SUPPRESS`  `SUPPRESS_EMPTY`  `AUTONUMBER`  `RANKING`  `SORT` (`ASC`/`DESC`/`ON`/`TOTAL`)  `SHOW_TOTAL`  `MAX_COL_WIDTH`  `DECIMALS`  `PCT_DECIMALS`  `COUNT_DECIMALS`  `MEAN_DECIMALS`  `PCT_SIGN`  `NPS PROMOTERS lo..hi DETRACTORS lo..hi`  `NPS_DECIMALS` |
 | `TABLE`-only | `STUBS`  `DISTRIBUTION`  `ADD`  `SECTION LABEL`  `LEVEL`  `BASE`  `FILTER`  `SHEET`  `STATS_ONLY`  `NAME`  `INDEX` (`ON $var=code` \| `ON TOTAL`) |
@@ -50,7 +51,8 @@ END TABLE    END BANNER   END DEFINE   END RIM   END AUTOTAB   ENDNET   ENDHEADI
 | `VARIABLE` | `LABEL`  `TYPE`  `VALUE`  `MISSING`  `SCORE` |
 | `DERIVE` | `LABEL`  `TYPE`  `SCORE`  `STUB`  `NET`  `ENDNET`  `HEADING`  `ENDHEADING` |
 | `STUB` display props | `DISPLAY` (pct_only \| count_only \| row_pct)  `SUPPRESS`  `CUMULATIVE`  `DECIMALS`  `KEEP_IF_ZERO` |
-| `SPREAD` | `FROM $slot1, $slot2, …`  `LABEL` — reassemble multiple-category ("spread") slots into one multi-response `@var` |
+| `SPREAD` | `FROM $slot1, $slot2, …`  `CODES lo..hi \| c1,c2,…`  `LABEL` — reassemble multiple-category ("spread") slots into one multi-response `@var` |
+| `COMBINE` | `FROM var1, var2, …`  `LABEL` — merge same-codeframe `$`/`@` variables (different groups/waves) into one multi-response `@var` |
 | `STACK` (single-axis) | `POSITIONS`  `MAP`  `FROM` |
 | `STACK` (multi-axis) | `AXIS`  `AT`  `DROP EMPTY`  `NULL`  (also `MAP`  `FROM`) |
 | `EDIT` / `RECODE` | `SET`  `WHERE`  `INTO`  `ELSE`  (`->`) |

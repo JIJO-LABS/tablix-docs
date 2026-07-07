@@ -143,12 +143,25 @@ A multi-select question is stored one of two ways:
 a respondent is coded with code *k* iff **any** listed slot equals *k*.
 
 ```mrscript
-SPREAD @name FROM $slot1, $slot2, ...  [LABEL "text"]
+SPREAD @name FROM $slot1, $slot2, ...  [CODES <codeframe>] [LABEL "text"]
 ```
 
 - **`FROM $slot1, $slot2, …`** — the answer-slot variables (any order; at least one,
   usually all the slots of the question). Slots must be categorical / coded — an
   `open_end` (text) slot is rejected.
+- **`CODES lo..hi | c1, c2, …`** *(optional)* — an explicit, closed codeframe: one stub
+  per listed code, **in the given order**, even at 0 count. Ranges and single codes mix
+  freely and duplicates are dropped:
+  ```mrscript
+  CODES 1..41           CODES 1, 3, 5           CODES 1..41, 99
+  CODES 1..3, 10..12, 99
+  ```
+  Without `CODES`, the frame is **data-driven** (only the codes actually present), so a
+  code nobody chose is missing and the frame can differ slightly across data slices.
+  Give `CODES` when the full frame matters — e.g. a coded open-end where every theme
+  should show even at 0, or a chained `NET`/`DERIVE` that references a specific code
+  and needs it to always validate. Labels still come from the slots' value labels where
+  present; a code with none gets a bare-number label.
 - **`LABEL "text"`** *(optional)* — the variable label; defaults to the bare `@name`.
 
 The result is an **ordinary multi-response variable** (exactly like a `DERIVE` list):
@@ -174,6 +187,76 @@ END TABLE
     `SPREAD` expands into the equivalent multi-response `DERIVE` (one `STUB` per code,
     `WHERE $kb_1 = k OR $kb_2 = k OR …`). Writing that `DERIVE` by hand produces an
     identical table — `SPREAD` just saves the typing.
+
+---
+
+## 11c. COMBINE (same-codeframe variable merger) {#combine}
+
+`COMBINE` merges two or more variables that **share the same codeframe** into one
+multi-response variable. The classic use case: a brand or item question was asked to
+different groups **separately** (kids vs. teens, two waves, two question versions),
+and each group's column uses the same set of codes.
+
+The key difference from `SPREAD`:
+
+| | Reassembles | Sources |
+|---|---|---|
+| **`SPREAD`** | **one** question stored across N answer slots (each slot holds the code of one chosen item — a floating-code layout) | `$` source vars only |
+| **`COMBINE`** | N **semantically separate** variables (different groups / waves / question versions) that happen to share a codeframe | `$` source vars **and** `@` derived list vars (mix freely) |
+
+A respondent is coded with code *k* iff their variable **equals** *k* (a `$` single-punch
+source) or **has** *k* **in its list** (an `@` derived list var — `DERIVE` / `SPREAD` /
+an earlier `COMBINE`).
+
+```mrscript
+COMBINE @name FROM var1, var2, ...  [LABEL "text"]
+```
+
+- **`FROM var1, var2, …`** — two or more variables, each either a `$source_var`
+  (single-punch) or an `@derived_var` (a multi-response list var, defined **earlier**
+  in the script). At least one is required; `open_end` (text) sources are rejected.
+- **`LABEL "text"`** *(optional)* — the variable label; defaults to the bare `@name`.
+
+**Codeframe resolution** — for `$` source vars: the union of their value labels (the
+first source wins on a label clash; declared-`MISSING` codes are dropped, falling back
+to the distinct integer values present when unlabelled). For `@` derived vars: the leaf
+stub codes/labels from whichever source defines each code first (`NET`/`HEADING` rows
+are skipped — they're composites, not real codes).
+
+The result behaves exactly like `DERIVE` / `SPREAD`: tabulates with `STUBS @name`,
+bases on the union (respondents coding ≥ 1 item), nets and crosses, takes overlap-aware
+significance, and exports as `{name}_{code}` 0/1 dichotomy columns.
+
+```mrscript title="Two separate brand questions (one per sub-group) merged into one"
+SOURCE 'survey.sav'
+
+VARIABLE $S13K  MISSING 99  END VARIABLE
+VARIABLE $S13TA MISSING 99  END VARIABLE
+
+COMBINE @S13 FROM $S13K, $S13TA
+    LABEL "FLAVOURED MILK BRAND MOST OFTEN CONSUMED"
+
+TABLE 'Brands'
+  STUBS @S13   BANNER $S7 BY $S2_1   STATS col_pct, n
+END TABLE
+```
+
+```mrscript title="Combining two SPREAD-derived multi-response vars"
+SPREAD @kids_brands FROM $kb_1, $kb_2, $kb_3   LABEL "Kids brands"
+SPREAD @teen_brands FROM $tb_1, $tb_2           LABEL "Teen brands"
+
+COMBINE @all_brands FROM @kids_brands, @teen_brands
+    LABEL "All brands (kids + teens)"
+
+TABLE 'Brand awareness'
+  STUBS @all_brands   BANNER $seg   STATS col_pct, n
+END TABLE
+```
+
+!!! note "It's a pure shorthand"
+    Like `SPREAD`, `COMBINE` expands into the equivalent multi-response `DERIVE` (one
+    `STUB` per code, `WHERE $src1 = k OR $src2 = k …` or `@src1 = k OR @src2 = k …`).
+    The result is byte-for-byte identical to a hand-written `DERIVE`.
 
 ---
 

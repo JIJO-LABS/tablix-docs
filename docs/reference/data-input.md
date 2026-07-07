@@ -293,6 +293,45 @@ TABLE 'Income (from profile file)' STUBS $income END TABLE
     - One combine operation per script (chained append-then-join is not yet
       supported).
 
+### MERGE — join an auxiliary file onto the working frame, in script order {#merge}
+
+```mrs
+MERGE "file" [AS fmt] [SHEET "s"] ON %RESPID|$key
+             [KEY "filecol"] [PREFIX name] [TYPE left|inner]
+```
+
+Unlike `APPEND`/`JOIN` (a one-time assembly step, done once before any cleaning),
+`MERGE` is a **data-preparation statement** — it runs **in script order**, wherever
+you write it (after `%RESPID`, after cleaning, anywhere), and it is **chainable**:
+write as many `MERGE` statements as you need, e.g. to pull in several sheets of an
+open-end coding workbook one at a time. The file is read through the same loader
+registry as `SOURCE` (any format: csv / parquet / excel / sav), then left-joined onto
+the current working data on the respondent key.
+
+| Clause | Meaning |
+|--------|---------|
+| `ON %RESPID\|$key` | Join key on the **working frame** (needs a `%RESPID` declaration, or an existing `$var`). |
+| `KEY "filecol"` | The matching column's name **inside the file being merged**, when it differs from the working-frame key. |
+| `PREFIX name` | Prefix every added column with `name_` — essential when several merged files/sheets share column names (e.g. `Code1..Code10` across coding sheets). Referenced later as `$name_Code1`. |
+| `TYPE` | `left` (default — keep every working-frame row; non-matches get blanks) or `inner` (matched rows only). |
+
+The join key's data type is coerced to match the working frame's automatically (an
+Excel key read as text/float still matches an integer id). A merged column that
+clashes with an existing one, with no `PREFIX`, is an error.
+
+```mrs
+SOURCE "survey.sav"
+%RESPID = $SbjNum
+MERGE "coding.xlsx" SHEET "Q4a_likes" ON %RESPID PREFIX q4a
+SPREAD @likes FROM $q4a_Code1, $q4a_Code2, $q4a_Code3
+TABLE "Likes" STUBS @likes END TABLE
+```
+
+**Which one should I use?** Two waves of the *same* questionnaire, stacked → `APPEND`.
+A one-time profiling file for the same respondents, needed at the top of the script →
+`JOIN`. An open-end coding sheet (or several) you want to pull in at whatever point
+makes sense, possibly more than once → `MERGE`.
+
 ## 7a. AGGREGATE — roll exposure/diary rows up to respondent level {#aggregate}
 
 Survey data is sometimes held at the **exposure / diary / transaction level** — one

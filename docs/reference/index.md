@@ -26,8 +26,9 @@ This is the page you keep open while you script. If you are new, work through th
 
 -   **[2 · Data input](data-input.md)**
 
-    `SOURCE` (files, formats, codebooks), `%RESPID` (the respondent key), and
-    `APPEND` / `JOIN` for combining files.
+    `SOURCE` (files, formats, codebooks), `%RESPID` (the respondent key),
+    `APPEND` / `JOIN` / `MERGE` for combining files, and `AGGREGATE` for
+    rolling exposure/diary rows up to respondent level.
 
 -   **[3 · Setup blocks](setup-blocks.md)**
 
@@ -36,8 +37,8 @@ This is the page you keep open while you script. If you are new, work through th
 
 -   **[4 · Data preparation](data-preparation.md)**
 
-    `DERIVE`, `STACK`, `EDIT`, `RECODE`, `KEEP/DROP ROWS`, `COMPUTE` — clean,
-    recode, compute, and reshape, all in script order.
+    `DERIVE`, `SPREAD`, `COMBINE`, `STACK`, `EDIT`, `RECODE`, `KEEP/DROP ROWS`,
+    `COMPUTE` — clean, recode, compute, and reshape, all in script order.
 
 -   **[5 · Tables](tables.md)**
 

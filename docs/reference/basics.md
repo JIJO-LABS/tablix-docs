@@ -122,6 +122,20 @@ TABLE '{brand} Awareness'
 END TABLE
 ```
 
+A `SET` value can also be overridden from **outside** the script, without
+editing the file — the `SET` line stays as the default, and a caller supplies
+a different value for one particular run:
+
+```bash
+mrscript run script.mrs --set brand=Careem --set city=2   # repeatable
+```
+
+In the desktop app, the **Sweep** panel (sidebar) runs one script once per row
+of a parameter table, each row overriding a different set of `SET` values (and
+optionally a different data file per row) — "run this script with N different
+parameter sets," one output file per row. See [Output formats & the
+CLI](output.md#cli).
+
 ### DEFINE / CALL — macro inlining
 
 ```mrs

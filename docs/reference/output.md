@@ -167,6 +167,11 @@ all tables on a single "Tables" sheet (`single_sheet` layout).
 ```powershell
 mrscript run script.mrs                       # Execute; print text to stdout.
 mrscript run script.mrs --data data.sav       # Override the SOURCE file.
+mrscript run script.mrs \                     # Override SET values from outside
+    --set brand=Careem --set city=2           #   the script (repeatable; §4b).
+                                              #   The desktop Sweep panel does
+                                              #   this once per row of a
+                                              #   parameter table.
 
 mrscript export script.mrs report.csv         # Execute; write tagged CSV.
 mrscript export script.mrs report.xlsx        # Execute; write styled Excel.

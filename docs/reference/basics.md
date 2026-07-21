@@ -136,6 +136,45 @@ optionally a different data file per row) — "run this script with N different
 parameter sets," one output file per row. See [Output formats & the
 CLI](output.md#cli).
 
+### Reusing a clause bundle across many tables {#clause-bundles}
+
+`SET` substitutes raw text, so a value can be a **group of table clauses**, not
+just a word. That gives you one place to change how a whole family of tables is
+based, levelled or scored — instead of repeating the clauses on every `TABLE`:
+
+```mrs
+SET PB      = LEVEL @EVAL BASE respondents
+SET PBSCALE = LEVEL @EVAL BASE respondents  STATS n, col_pct, mean, std_dev
+
+TABLE 'S2. Location'   STUBS $S2    {PB}       END TABLE
+TABLE 'Q7. Colour'     STUBS @K_Q7  {PBSCALE}  END TABLE
+```
+
+This is the shortcut for a deck where some tables run at respondent level and
+others at product / exposure level. Combine it with the two facts that make the
+repetition avoidable in the first place:
+
+* Put the **most common banner in [`FORMAT`](setup-blocks.md#format)**. A global
+  `FORMAT` applies to *every* table regardless of where the block sits in the
+  file — a table written above `FORMAT` gets the same defaults as one below it —
+  so those tables need no `BANNER` clause at all.
+* Give each *other* family a `SET` bundle, as above.
+
+A 50-table deck then carries one short token per table and one place to edit.
+
+Two rules:
+
+* **A `SET` value must not reference another `SET`.** Substitution is a single
+  pass in declaration order, so `SET B = {A} …` only resolves when `A` is
+  declared *after* `B` — which is the opposite of what you would expect. Write
+  each bundle out in full instead.
+* The text is inlined verbatim, so keep the clauses valid for every table that
+  uses the bundle.
+
+`DEFINE` / `CALL` (below) does the same job when the bundle spans several lines;
+`SET` is the better fit for a one-line clause tail because it keeps the whole
+`TABLE … END TABLE` on one line.
+
 ### DEFINE / CALL — macro inlining
 
 ```mrs
@@ -274,6 +313,23 @@ fully blank row is skipped; integer cells drop a trailing `.0`.
 
 Unknown `{tokens}` pass through unchanged. `{loop.index}` is the table-numbering
 counter.
+
+!!! warning "A comma in a `#set` value makes it a list"
+
+    `#set` splits on commas to build the lists `#for` iterates, so a bare
+    `{name}` renders the *list*, not the text you wrote:
+
+    ```
+    #set SCALE = STATS n, col_pct, mean      // → a 3-item list
+    TABLE 'T' STUBS $q1 {SCALE} END TABLE    // → STATS n', 'col_pct', 'mean' …
+    ```
+
+    For a clause bundle that contains commas, use the MRScript **`SET`**
+    ([above](#clause-bundles)) rather than the authoring layer's `#set`: `SET`
+    is a plain text swap with no list semantics. Because unknown `{tokens}` pass
+    through the transpiler untouched, a `SET` written in a `.mrst` survives into
+    the generated `.mrs` and is resolved there — so both layers coexist. Use
+    `#set` for comma-free values and loop lists, `SET` for text bundles.
 
 ### Conditions (`#if` / `#elif`)
 

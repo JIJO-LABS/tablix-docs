@@ -151,6 +151,10 @@ the table level ([§17](tables.md)). One `FORMAT` block per script.
 | `PCT_DECIMALS n` | Decimal places for percentages only. |
 | `COUNT_DECIMALS n` | Decimal places for weighted/fractional counts and bases only. |
 | `MEAN_DECIMALS n` | Decimal places for Mean / Std Dev / score-summary rows only. |
+| `NPS PROMOTERS lo..hi DETRACTORS lo..hi` | Override the `nps` stat's promoter/detractor bands (default 0–10). |
+| `NPS_DECIMALS n` | Decimal places for the NPS row (default 0). |
+| `RESPONSES_LABEL 'text'` | Custom label for the `responses` (Total Responses) summary row (default "Total Responses"). |
+| `MEAN_RESPONSES_LABEL 'text'` | Custom label for the `mean_responses` (Mean Responses) summary row (default "Mean Responses"). |
 
 !!! info "Decimals resolution order"
 

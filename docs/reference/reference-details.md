@@ -63,6 +63,8 @@ The text-renderer legend names whichever strategy is active beneath the table.
 | `sum_of_squares` | Σx². |
 | `error_variance` | Σx² / n (or weighted equivalent). |
 | `nps` | Net Promoter Score (see below). |
+| `responses` | Total Responses — sum of leaf-stub counts (multi-select item picks), see below. |
+| `mean_responses` | Mean Responses — average items picked per respondent, see below. |
 
 !!! note "Notes"
 
@@ -122,6 +124,60 @@ END TABLE
 
 (Male's NPS +40 is significantly higher than Female's −40 at 95%, so the Male column
 carries Female's letter `B`.)
+
+#### Total and Mean Response Counts (`responses`, `mean_responses`) {#responses}
+
+For multi-select / multi-punch questions (a `DERIVE`d list variable, or a `SPREAD`),
+these two rows report how many items each respondent selected:
+
+| Stat | Meaning |
+|------|---------|
+| `responses` | **Total Responses** — sum of every leaf-stub count in the section, per banner column (the total number of items picked by everyone in that column). Unweighted: always a whole number. Weighted: sum of weights (fractional). |
+| `mean_responses` | **Mean Responses** — average items selected per respondent, over the column's valid base. Always equals `Σ(leaf col_pct) / 100` — e.g. three brands at 60%/70%/50% col_pct gives Mean Responses `1.80`. |
+
+```mrs
+DERIVE @aware LABEL "Brands aware of"
+    STUB 1 "Sony"    WHERE $aware_sony = 1
+    STUB 2 "Apple"   WHERE $aware_apple = 1
+    STUB 3 "Samsung" WHERE $aware_samsung = 1
+END DERIVE
+
+TABLE "Brand awareness"
+    STUBS  @aware
+    BANNER $region
+    STATS  col_pct, n, responses, mean_responses, sig
+END TABLE
+```
+
+```text
+                    Total      North      South
+Sony                  60%        80%        40%
+Apple                 70%        80%        60%
+Samsung               50%        40%        60%
+BASE                   10          5          5
+Total Responses        18          8         10
+Mean Responses        1.80       1.60       2.00
+                                             B
+```
+
+(South's Mean Responses is significantly higher than North's — the `B` flag sits
+under South, since South is being compared against North's letter.)
+
+- **Applicable to:** `STUBS`, `DISTRIBUTION`, and `ADD` tables (v1 scope). `LEVEL`
+  (stacked), `GRID`, `SUMMARY`, and `TURF` tables are deferred.
+- **Decimals:** `responses` uses `COUNT_DECIMALS` (default **0** — unweighted counts
+  are always integers; a weighted table typically sets `COUNT_DECIMALS 1` or `2` since
+  the weighted sum is fractional). `mean_responses` uses `MEAN_DECIMALS` (default **2**).
+- **Labels:** override with `RESPONSES_LABEL 'text'` / `MEAN_RESPONSES_LABEL 'text'` in
+  `FORMAT` or per-`TABLE` (defaults: "Total Responses" / "Mean Responses";
+  [§9](setup-blocks.md#format)).
+- **Significance:** only `mean_responses` is tested (independent-samples Welch t, like
+  any other Mean row). `responses` is a supporting count and is never flagged.
+- **ADDTAB:** `responses` sums across merged waves; `mean_responses` is re-derived over
+  the combined base (both ride `StatAccum`, so the merge is exact).
+- **NET / HEADING rows are excluded** from the count — only leaf stubs contribute.
+- Works on **single-punch** variables too (each respondent contributes at most 1, so
+  `mean_responses` is just the pick-rate — same info as `n`, expressed as an average).
 
 ---
 

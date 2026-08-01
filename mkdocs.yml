@@ -1,9 +1,9 @@
 site_name: Tablix & MRScript
 site_description: The complete guide and language reference for MRScript — the tabulation DSL behind Tablix.
 site_author: Tablix
-site_url: https://megajt.github.io/MRSCRIPT-docs/
-repo_url: https://github.com/MegaJT/MRSCRIPT-docs
-repo_name: MegaJT/MRSCRIPT-docs
+site_url: https://jijo-labs.github.io/tablix-docs/
+repo_url: https://github.com/JIJO-LABS/tablix-docs
+repo_name: JIJO-LABS/tablix-docs
 edit_uri: edit/main/docs/
 copyright: Tablix — MRScript Language Reference
 
@@ -89,7 +89,7 @@ extra:
   generator: false
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/MegaJT/MRSCRIPT
+      link: https://github.com/JIJO-LABS/tablix
 
 nav:
   - Home: index.md

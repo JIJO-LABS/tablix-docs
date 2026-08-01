@@ -55,6 +55,9 @@
         // NPS (Net Promoter Score) band override + decimals (the `nps` STATS value
         // is lowercase, so — like `mean`/`median` — it is not keyworded)
         "NPS", "NPS_DECIMALS", "PROMOTERS", "DETRACTORS",
+        // Response counts (the `responses` and `mean_responses` STATS values are
+        // lowercase, so they are not keyworded; the label directives are)
+        "RESPONSES_LABEL", "MEAN_RESPONSES_LABEL",
         // RIM weighting
         "RIM", "DIMENSION", "TARGETS", "MAX_ITERATIONS", "CONVERGENCE",
         "WEIGHT_CAP", "BASE_WEIGHT",

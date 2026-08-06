@@ -18,7 +18,7 @@
         "SOURCE", "APPEND", "JOIN", "MERGE", "WITH", "ON", "TYPE", "PREFIX", "KEY",
         "CONFIG", "FORMAT", "VARIABLE", "DERIVE", "STACK", "SPREAD", "COMBINE",
         "EDIT", "RECODE", "COMPUTE", "BANNER", "TABLE", "SCOPE",
-        "EXPORT", "DATA", "SCHEMA", "CODEBOOK",
+        "EXPORT", "DATA", "SCHEMA", "CODEBOOK", "CODE",
         // AGGREGATE — roll exposure/diary rows up to respondent level
         // (the uppercase aggregate functions are keyworded; the lowercase
         // STAT/COMPUTE `sum`/`mean`/`min`/`max` stay un-keyworded as before)

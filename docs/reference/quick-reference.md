@@ -39,8 +39,9 @@ END TABLE    END BANNER   END DEFINE   END RIM   END AUTOTAB   ENDNET   ENDHEADI
 
 | Context | Clauses |
 |---------|---------|
-| `SOURCE` | `AS`  `DATA`  `CODEBOOK`  `SCHEMA`  `SHEET`  (+ optional name) |
+| `SOURCE` | `AS`  `DATA`  `CODEBOOK`  `SCHEMA`  `SHEET`  `LABEL`  `CODE`  (+ optional name) |
 | `JOIN` | `WITH`  `ON`  `%RESPID`  `TYPE` (left \| inner) |
+| `APPEND` | `AS @var` (produces a source-tag variable) |
 | `MERGE` | `AS`  `SHEET`  `ON`  `KEY`  `PREFIX`  `TYPE` (left \| inner) — chainable, in-script-order file join |
 | `CONFIG` | `OUTPUT`  `SIG_CONFIDENCE`  `SIG_CORRECTION` (none \| bonferroni \| bh)  `SIG_COMPARE`  `SIG_TAILS` (1 \| 2)  `SIG_MEAN_TEST` (exact_t \| normal)  `SIG_DEFF`  `MISSING_TREATMENT`  `DEFAULT_STATS`  `SUPPRESS_STACKED_SIG`  `SUPPRESS_GRID_SIG`  `SUPPRESS_WAVE_SIG` |
 | `FORMAT` / `TABLE` shared | `STATS`  `BANNER`  `WEIGHT`  `BASE_LABEL`  `FOOTER`  `THOUSANDS_SEPARATOR`  `MIN_BASE`  `CONFIDENTIAL`  `BLANK_SUPPRESS`  `SUPPRESS_EMPTY`  `AUTONUMBER`  `RANKING`  `SORT` (`ASC`/`DESC`/`ON`/`TOTAL`)  `SHOW_TOTAL`  `MAX_COL_WIDTH`  `DECIMALS`  `PCT_DECIMALS`  `COUNT_DECIMALS`  `MEAN_DECIMALS`  `PCT_SIGN`  `NPS PROMOTERS lo..hi DETRACTORS lo..hi`  `NPS_DECIMALS` |
@@ -121,4 +122,4 @@ Scripts using these will error until the feature ships.
 | **Extra significance** | chi-square, t-test (pairs), Kolmogorov-Smirnov, Mann-Whitney. `SIG_TAILS`, `SIG_CORRECTION bh` (Benjamini–Hochberg FDR), and `SIG_MEAN_TEST exact_t` are **implemented** — see [§28](reference-details.md#sig-strategy). |
 | **More COMPUTE** | `round(x, n)` decimals; `log` / `exp` / `floor` / `ceil` / `clip`; conditional `COMPUTE … WHERE`. |
 | **Output formats** | Word (`.docx`), PDF, PowerPoint; Triple-S / XtabML export. |
-| **Multi-file (more)** | Chained append-then-join; per-wave id tagging; `RENAME` / suffix to resolve `JOIN` column clashes; right / outer joins. |
+| **Multi-file (more)** | Chained append-then-join; `RENAME` / suffix to resolve `JOIN` column clashes; right / outer joins. |

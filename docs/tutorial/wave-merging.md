@@ -32,6 +32,32 @@ SOURCE "tracker.sav"
 
 ---
 
+## (Alternative) Setup — combine separate wave files with source tagging
+
+If your monthly fieldwork is split into separate files (e.g. `january.sav`,
+`february.sav`, `march.sav`), you can combine them with `APPEND` and automatically
+produce a wave-tag variable — no need to pre-build a separate $wave column.
+
+```mrs
+SOURCE jan 'january.sav'   LABEL 'January'   CODE 1
+SOURCE feb 'february.sav'  LABEL 'February'  CODE 2
+SOURCE mar 'march.sav'     LABEL 'March'     CODE 3
+
+APPEND jan, feb, mar AS @wave
+%RESPID = $respondent_id
+```
+
+The `LABEL` and `CODE` clauses on each source define how each wave will be labeled
+and tagged. The `APPEND … AS @wave` statement produces a ready-to-use `single_punch`
+variable with three stubs (Jan, Feb, Mar), directly usable in tables without any
+extra recoding. The CODE values (1, 2, 3) identify which source each row came from.
+
+You can omit `CODE` and MRScript will auto-number them: `CODE 1, 2, 3` above defaults
+to `1, 2, 3` in append order. You can also let some sources auto-number and others
+pick explicit codes (auto-numbering continues from the highest explicit code).
+
+---
+
 ## Step 1 — Tabulate each wave, and give it a NAME
 
 Tabulate the same question once per wave, filtering to that wave. The `NAME` clause

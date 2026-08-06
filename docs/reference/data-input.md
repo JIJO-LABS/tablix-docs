@@ -18,6 +18,8 @@ named `SOURCE`s combined with `APPEND` / `JOIN` (see [§7](#append--join)).
 | `DATA "file"` | Companion data file for split formats (Triple-S / MDD-DDF), where metadata and case data live in separate files. |
 | `CODEBOOK "file"` | Sidecar metadata file (JSON) supplying labels, value labels, missing codes, types, and scores for code-only data. Applied first; inline `VARIABLE` blocks ([§10](setup-blocks.md#variable)) then override it (inline wins). |
 | `SCHEMA "file"` | Fixed-width column layout file for the `ascii` format. |
+| `LABEL "text"` | Display label for this source (used in wave/source tagging). Defaults to the source's name. Only meaningful with `APPEND … AS @var` ([§7](#append--join)). |
+| `CODE n` | Integer tag for this source (used in wave/source tagging). Defaults to sequential numbering starting at 1. Only meaningful with `APPEND … AS @var` ([§7](#append--join)). |
 
 ### Formats
 
@@ -250,18 +252,24 @@ export) is unchanged — it just sees one combined dataset.
 ### APPEND — stack rows (waves / more respondents)
 
 ```mrs
-APPEND name1, name2 [, name3 ...]
+APPEND name1, name2 [, name3 ...] [AS @var]
 ```
 
 Concatenates the rows of the named datasets, unioning columns (a column missing from
 one file is null-filled there). Variable metadata is merged; the first file's
 definition wins on shared columns.
 
+Each source may include optional `LABEL "text"` (display label, defaults to the source's
+name) and `CODE n` (integer tag, defaults to sequential numbering starting at 1).
+When the `APPEND` ends with `AS @var`, it produces a ready-to-use `single_punch` categorical
+variable with one stub per source — ideal for tagging rows by their source wave, market,
+or respondent pool. Omitting `AS @var` preserves the original behavior (no tag column).
+
 ```mrs
-SOURCE w1 'wave1.sav'
-SOURCE w2 'wave2.sav'
-APPEND w1, w2
-TABLE 'Gender (both waves)' STUBS $gender END TABLE
+SOURCE w1 'wave1.sav'  LABEL 'January'   CODE 1
+SOURCE w2 'wave2.sav'  LABEL 'February'  CODE 2
+APPEND w1, w2 AS @wave
+TABLE 'Gender (both waves)' STUBS $gender BANNER @wave END TABLE
 ```
 
 ### JOIN — add columns (profiling / more variables)

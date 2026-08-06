@@ -249,6 +249,23 @@ TABLE 'Awareness (pooled)'
 END TABLE
 ```
 
+**Or tag each wave as you append** (produces an auto-generated @wave variable):
+
+```mrs
+SOURCE w1 'wave1.sav'  LABEL 'January'   CODE 1
+SOURCE w2 'wave2.sav'  LABEL 'February'  CODE 2
+APPEND w1, w2 AS @wave
+
+TABLE 'Awareness by wave'
+  STUBS  $aware
+  BANNER @wave         // ready to use — no extra recoding
+  STATS  col_pct, n
+END TABLE
+```
+
+The `LABEL` and `CODE` clauses on each source define how rows are tagged. The
+`APPEND … AS @wave` produces a `single_punch` variable directly usable in tables.
+
 ---
 
 ## Wave-on-wave change with MANIP

@@ -145,6 +145,7 @@ the table level ([§17](tables.md)). One `FORMAT` block per script.
 | `RANKING ascending\|descending` | Sort stub rows by the **Total** column value — shorthand for `SORT col_pct ASC\|DESC ON TOTAL`. |
 | `SORT [col_pct\|n\|row_pct] [ASC\|DESC] [ON $var=code\|TOTAL]` | Sort stub rows by any banner column and stat. Full syntax in [§17 Sorting rows](tables.md#sorting). |
 | `SHOW_TOTAL true\|false\|'Label'` | Show/hide/label the leading Total column ([§17](tables.md#total-column)). |
+| `SHOW_SCORES true\|false` | Append each leaf stub's contributing score value in brackets, on tables requesting `mean` ([§28](reference-details.md#show-scores)). Default `true`. |
 | `PCT_SIGN true\|false` | Append the `%` sign to percentages (default `true`). `false` renders the bare number (`56` not `56%`). Text renderer only. |
 | `MAX_COL_WIDTH n` | Text-renderer header-wrap cap per data column. |
 | `DECIMALS n` | **Umbrella** decimal places — the fallback for percentages, counts **and** means when the specific directive below is not set. |
@@ -193,8 +194,49 @@ that carry no labels. All clauses are optional. A sidecar `CODEBOOK`
 | `LABEL 'text'` | Display label shown in table headers. |
 | `TYPE type_value` | Measurement type (see below). |
 | `VALUE code 'label'` | Add / override a value label for one code. Declaring value labels on a numeric column makes it categorical (distributes by stubs instead of the mean/std path). |
-| `MISSING code [, …]` | Declare codes as missing (excluded from base; stubs removed). SPSS missing metadata is **not** auto-applied. |
-| `SCORE code = value` | Numeric score for a code, used by mean / std summaries. |
+| `MISSING code [, …]` | Declare codes as missing — excluded from **rows, base and summary stats together** (the stub is removed). SPSS missing metadata is **not** auto-applied. |
+| `STATS_EXCLUDE code [, …]` | Declare codes as non-response **sentinels**: excluded from summary stats **only**. The code keeps its own labelled row with a real count and stays in the base. See below. |
+| `SCORE code = value` | Numeric score for a code, used by mean / std summaries. Declaring *any* `SCORE` switches the variable to **explicit mode** — a code you don't score drops out of the mean. With **no** `SCORE` at all, each code is its own score (code-as-score). |
+
+### `MISSING` vs `STATS_EXCLUDE` {#missing-vs-stats-exclude}
+
+Both remove a code from the mean; they differ in what else goes with it.
+
+| | Row shown? | In the base? | In mean/std/median? |
+|---|---|---|---|
+| *(neither clause)* | yes | yes | **yes** |
+| `MISSING 998` | no | no | no |
+| `STATS_EXCLUDE 998` | **yes** | **yes** | no |
+
+`STATS_EXCLUDE` exists for the common survey-scripting pattern where a numeric-entry
+field carries a couple of non-numeric escape-hatch codes (`998` "Do not stock/sell",
+`999` "Don't know") instead of being left blank. You want those reported as their own
+rows with real counts — which `MISSING` makes impossible — but you do not want them
+averaged into a 0-100% mean.
+
+```mrs
+VARIABLE $q5a
+  LABEL 'Stocking mix %'
+  VALUE 998 'Do not stock/sell'
+  VALUE 999 "Don't know / Can't say"
+  STATS_EXCLUDE 998, 999
+END VARIABLE
+
+TABLE 'Q5a stocking mix'
+  DISTRIBUTION $q5a
+  BANNER $region
+  STATS n, col_pct, mean
+END TABLE
+```
+
+The sentinel rows show their counts and percentages over the **full** base, and the
+`Mean` row below is computed over the true numeric values only.
+
+The exclusion is a property of the **variable**, so every summary-stat path for it
+honours the clause — `DISTRIBUTION`, a `STUBS` table's code-as-score auto-mean, a
+`TYPE numeric` mean/std section, and a stacked (`LEVEL`) target that inherits it. A
+code listed in **both** `MISSING` and `STATS_EXCLUDE` is simply fully missing; a code
+that is both `SCORE`-d and `STATS_EXCLUDE`-d is excluded (the exclusion wins).
 
 **Type values**
 

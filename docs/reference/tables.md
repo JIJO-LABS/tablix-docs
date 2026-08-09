@@ -57,6 +57,21 @@ DISTRIBUTION $age STATS n, col_pct, mean, std_dev
 
 `STUBS` and `DISTRIBUTION` may both appear and compose in source order.
 
+!!! tip "Sentinel codes in a numeric-entry column"
+
+    A numeric-entry field that carries non-numeric escape codes (`998` "Do not
+    stock/sell", `999` "Don't know") needs those reported as rows *and* kept out of
+    the mean. `MISSING` can't do that — it drops a code from rows, base and stats
+    together. Declare
+    [`STATS_EXCLUDE`](setup-blocks.md#missing-vs-stats-exclude) on the variable
+    instead: the sentinel keeps its own labelled row and its place in the base,
+    and only the summary rows skip it.
+
+    ```mrs
+    VARIABLE $q5a  STATS_EXCLUDE 998, 999  END VARIABLE
+    TABLE 'Q5a' DISTRIBUTION $q5a STATS n, col_pct, mean END TABLE
+    ```
+
 #### ADD — pool variables into one section
 
 ```mrs
@@ -332,6 +347,7 @@ merge (`STATS + …`).
 | `SHEET 'tab name'` | Target worksheet name in Excel output (no effect on text output). |
 | `NAME 'handle'` | Register this table in the table store under `handle` instead of its title, so a cross-table op ([§20](#cross-table)) can address it. Names must be unique within the script. |
 | `SHOW_TOTAL true\|false\|'Label'` | Show (default), hide, or relabel the leading Total column. The Total column is excluded from significance lettering. |
+| `SHOW_SCORES true\|false` | Append each leaf stub's contributing score value in brackets after its label (e.g. `Agree [4]`) — but **only on a table whose `STATS` requests `mean`**; a table without `mean` never shows brackets regardless. The value is the code's declared `SCORE`, or the raw code itself when the variable has no `SCORE` declared anywhere; a code left unscored on a partially-scored variable shows no bracket. NETs and HEADINGs are never annotated. Default **true**. |
 
 Other `FORMAT` directives may also appear at table level (overriding the `FORMAT`
 default here): `BASE_LABEL`, `FOOTER`, `THOUSANDS_SEPARATOR`, `MIN_BASE`,

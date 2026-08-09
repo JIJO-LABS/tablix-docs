@@ -34,7 +34,8 @@
         "AUTOTAB", "VARS", "LIKE", "EXCLUDE",
         // table / variable clauses
         "STATS", "LEVEL", "BASE", "FILTER", "WEIGHT", "SHEET", "LABEL",
-        "VALUE", "MISSING", "SCORE", "POSITIONS", "INTO", "ELSE", "SET",
+        "VALUE", "MISSING", "STATS_EXCLUDE", "SCORE", "POSITIONS", "INTO",
+        "ELSE", "SET",
         "KEEP", "DROP", "ROWS", "EMPTY", "SHOW_TOTAL", "STATS_ONLY",
         "ANSWERED_BASE", "BREAKS", "DISPLAY", "SUPPRESS", "CUMULATIVE", "DECIMALS",
         "KEEP_IF_ZERO", "GRID", "DEFINE", "CALL",

@@ -72,8 +72,34 @@ The text-renderer legend names whichever strategy is active beneath the table.
       declared; otherwise each **code is used as its own score** (code = score),
       matching `DISTRIBUTION` and numeric variables. A multi-response (list) variable
       needs an explicit `SCORE` — a code-mean over a list of codes is not meaningful.
+    - Declaring **any** `SCORE` puts the variable in **explicit mode**: a code you
+      did not score drops out of the mean. The code-as-score fallback applies only
+      when the variable has *no* `SCORE` at all — it is whole-variable, not per-code.
     - Numeric variables use their raw values.
+    - Codes declared
+      [`STATS_EXCLUDE`](setup-blocks.md#missing-vs-stats-exclude) are skipped by
+      every summary stat while keeping their row and their place in the base — the
+      non-response sentinel case (`998` "Do not stock", `999` "Don't know" sharing a
+      numeric column). Distinct from `MISSING`, which drops a code from rows, base
+      and stats together.
     - All summary stats honour `WEIGHT` (weighted sums / Kish effective base).
+
+#### Showing the contributing score (`SHOW_SCORES`) {#show-scores}
+
+`SHOW_SCORES` (`FORMAT` or per `TABLE`, default **true**) appends each leaf stub's
+contributing value in brackets after its label — e.g. `Agree [4]` — so the bracket is a
+transparency footnote for exactly what number fed the `mean` row directly below it:
+
+- Shown value = the code's declared `SCORE`, or the raw code itself when the variable
+  has **no** `SCORE` declared anywhere (the same code-as-score fallback described
+  above); a code left unscored on a **partially**-scored variable shows no bracket for
+  that row.
+- **Gated on this table's `STATS` requesting `mean`** — a table without `mean` never
+  shows a bracket, regardless of `SHOW_SCORES` or whether the variable has scores
+  declared elsewhere. This is per-table, not per-variable: the same scored variable
+  tabulated in two tables shows brackets only on the one asking for `mean`.
+- NETs and HEADINGs are never annotated.
+- Set `SHOW_SCORES false` (`FORMAT` or per `TABLE`) to turn brackets off entirely.
 
 #### Net Promoter Score (`nps`) {#nps}
 

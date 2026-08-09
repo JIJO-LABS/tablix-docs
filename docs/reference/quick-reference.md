@@ -49,7 +49,7 @@ END TABLE    END BANNER   END DEFINE   END RIM   END AUTOTAB   ENDNET   ENDHEADI
 | `GRID` table | `TYPE GRID`  `COLUMN`  `LABEL`  `FILTER`  `ANSWERED_BASE` |
 | `SUMMARY` table | `TYPE SUMMARY`  `STATEMENTS`  `MEASURE` (`TOP`/`BOTTOM`/`NET`/`mean`/`median`/`nps`/…)  `SCALE` |
 | `TURF` table | `TYPE TURF`  `ITEMS`  `SIZE k`/`SIZE lo..hi`  `REPORT` (reach \| incremental \| frequency)  `METHOD` (exact \| greedy \| auto) |
-| `VARIABLE` | `LABEL`  `TYPE`  `VALUE`  `MISSING`  `SCORE` |
+| `VARIABLE` | `LABEL`  `TYPE`  `VALUE`  `MISSING`  `STATS_EXCLUDE`  `SCORE` |
 | `DERIVE` | `LABEL`  `TYPE`  `SCORE`  `STUB`  `NET`  `ENDNET`  `HEADING`  `ENDHEADING` |
 | `STUB` display props | `DISPLAY` (pct_only \| count_only \| row_pct)  `SUPPRESS`  `CUMULATIVE`  `DECIMALS`  `KEEP_IF_ZERO` |
 | `SPREAD` | `FROM $slot1, $slot2, …`  `CODES lo..hi \| c1,c2,…`  `LABEL` — reassemble multiple-category ("spread") slots into one multi-response `@var` |

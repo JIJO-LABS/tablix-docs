@@ -135,6 +135,7 @@ the table level ([§17](tables.md)). One `FORMAT` block per script.
 | `BANNER Name` | Default named banner (defined by [§18](tables.md#named-banner)). |
 | `WEIGHT $weight_var` | Default weight variable. |
 | `BASE_LABEL 'text'` | Rename the base/respondents row. |
+| `BASE_DESCRIPTION 'text'` | Set the `Base: …` identity line for every table (overridable per `TABLE`; both win over `SCOPE LABEL` — see [§19](tables.md#base-description)). |
 | `FOOTER 'text'` | Append a line below every table. |
 | `THOUSANDS_SEPARATOR true\|false` | Comma-group large counts (e.g. `1,234`). |
 | `MIN_BASE n [MASK 'text']` | Mask whole banner columns with base `< n` (mask: `<<`). |

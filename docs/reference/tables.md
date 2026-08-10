@@ -350,7 +350,8 @@ merge (`STATS + …`).
 | `SHOW_SCORES true\|false` | Append each leaf stub's contributing score value in brackets after its label (e.g. `Agree [4]`) — but **only on a table whose `STATS` requests `mean`**; a table without `mean` never shows brackets regardless. The value is the code's declared `SCORE`, or the raw code itself when the variable has no `SCORE` declared anywhere; a code left unscored on a partially-scored variable shows no bracket. NETs and HEADINGs are never annotated. Default **true**. |
 
 Other `FORMAT` directives may also appear at table level (overriding the `FORMAT`
-default here): `BASE_LABEL`, `FOOTER`, `THOUSANDS_SEPARATOR`, `MIN_BASE`,
+default here): `BASE_LABEL`, `BASE_DESCRIPTION` ([§19 Overriding the Base: line](#base-description)),
+`FOOTER`, `THOUSANDS_SEPARATOR`, `MIN_BASE`,
 `CONFIDENTIAL`, `BLANK_SUPPRESS`, `SUPPRESS_EMPTY`, `AUTONUMBER`, `RANKING`,
 `SORT` ([§17 Sorting rows](#sorting)), `MAX_COL_WIDTH`, `DECIMALS`, `PCT_DECIMALS`,
 `COUNT_DECIMALS`, `MEAN_DECIMALS`, `PCT_SIGN`.
@@ -577,6 +578,33 @@ ENDSCOPE
     - `SCOPE LABEL` is shown as the `Base: …` line in each enclosed table's text
       output (nested labels join outer→inner with `; `). Tables with no enclosing
       labelled `SCOPE` default to `Base: All respondents`.
+
+### Overriding the Base: line — BASE_DESCRIPTION {#base-description}
+
+`BASE_DESCRIPTION 'text'` sets the `Base: …` line explicitly instead of relying on
+`SCOPE LABEL`. It works like every other `FORMAT`/`TABLE` directive: declare it once
+in the global `FORMAT` block to default every table to it, or on a specific `TABLE`
+to override just that one. Precedence (highest wins): **table `BASE_DESCRIPTION`** →
+**global `FORMAT BASE_DESCRIPTION`** → **enclosing `SCOPE LABEL`(s)** → `All respondents`.
+
+```mrs
+FORMAT
+  BASE_DESCRIPTION 'All qualified respondents'
+END FORMAT
+
+SCOPE WHERE $gender = 1 LABEL 'Males'
+  TABLE 'Q1 — Males' STUBS $q1 END TABLE                          -- Base: All qualified respondents
+  TABLE 'Brands — Males, opted in'
+    STUBS @brands
+    BASE_DESCRIPTION 'Males who opted into brand tracking'        -- table wins over both
+  END TABLE
+ENDSCOPE
+```
+
+Distinct from `BASE_LABEL`, which renames the base **row**'s left-hand label
+(default "Total") — `BASE_DESCRIPTION` renames the identity **line** under the
+table title instead. A table's own `FILTER` clause never feeds `Base: …`; only
+`SCOPE LABEL` and `BASE_DESCRIPTION` do.
 
 ---
 

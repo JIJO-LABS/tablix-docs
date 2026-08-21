@@ -127,7 +127,10 @@ EXPECT $country IN (1, 2, 3, 4)
 `MISSING` is sugar for `IS NULL` (the variable has no value / was skipped).
 `ANSWERED` is sugar for `IS NOT NULL` (the variable carries a value).
 Both work with any `$` source variable. General conditions (comparisons, `IN`,
-`BETWEEN`, `AND`, `OR`, `NOT`, nested) are also valid.
+`BETWEEN`, `AND`, `OR`, `NOT`, nested) are also valid — a `NOT` inside an
+`EXPECT` condition follows the same missing-value rule as everywhere else in
+MRScript ([§29](reference-details.md#not-missing)): a respondent missing on
+the asserted variable does not satisfy it, and is reported as a violation.
 
 Place `EXPECT` declarations anywhere at the top level of a script — they are
 parsed and evaluated only by `mrscript health` and never affect a `run` /

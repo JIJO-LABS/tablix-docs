@@ -229,6 +229,40 @@ Conditions may reference source (`$`) and earlier-defined `@variables`. (Arithme
 expressions like `$a + $b` are only available inside `COMPUTE`
 ([§16](data-preparation.md#compute)) — not in conditions, which are comparison-based.)
 
+### Missing values under `NOT` {#not-missing}
+
+A missing value reads as **not matching** wherever it's tested directly — `$brand = 1`
+is false for a respondent who never answered `$brand`, and they're correctly excluded
+from that stub. `NOT` flips that: **`NOT cond` is true whenever `cond` is not decisively
+true**, so a respondent missing on every variable inside a `NOT` satisfies it. This
+matters for the standard mutually-exclusive-tiers pattern, where two variables are
+answered on a disjoint/routed basis:
+
+```mrs
+DERIVE @recency
+  STUB 1 'P1W'         WHERE $brand_a = 1 OR $brand_b = 1
+  STUB 2 'P1M not P1W' WHERE ($brand_a = 2 OR $brand_b = 2)
+                        AND NOT ($brand_a = 1 OR $brand_b = 1)
+END DERIVE
+```
+
+A respondent who answered `$brand_a = 2` and never saw `$brand_b` at all (it's null for
+them, not "answered something else") still satisfies `NOT ($brand_a = 1 OR $brand_b = 1)`
+— they didn't use either brand last week, which is exactly what the tier means. `STUB 1`
+and `STUB 2` are mutually exclusive and every respondent lands in exactly one (or
+neither, if they match neither `WHERE`), so tiers built this way sum correctly to their
+own union `NET`.
+
+Where a script genuinely wants "answered, and not X" — excluding respondents who were
+never asked at all — say so explicitly:
+
+```mrs
+$brand_a ANSWERED AND NOT ($brand_a = 1)
+```
+
+The same rule applies to `EXPECT ... WHERE NOT (...)` routing assertions
+([§25](health.md#expect)) and to `!=` on a multi-response variable.
+
 ---
 
 ## 30. Base computation {#base}

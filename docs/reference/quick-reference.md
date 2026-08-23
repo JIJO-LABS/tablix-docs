@@ -83,7 +83,7 @@ END TABLE    END BANNER   END DEFINE   END RIM   END AUTOTAB   ENDNET   ENDHEADI
 | Command | What it does |
 |---------|-------------|
 | `mrscript run script.mrs` | Execute script, print text tables to stdout |
-| `mrscript export script.mrs out.csv` | Execute script, write CSV (or `.xlsx`) output |
+| `mrscript export script.mrs out.csv` | Execute script, write CSV (`.xlsx` / `.html` / `.pptx` also supported) output |
 | `mrscript export-data script.mrs out.sav` | Execute script, write transformed dataset |
 | `mrscript build script.mrst` | Transpile `.mrst` authoring file to `.mrs` |
 | `mrscript health script.mrs` | Run data-quality checks, print report |
@@ -121,5 +121,5 @@ Scripts using these will error until the feature ships.
 | **Cross-table operations** | `CEPX` re-emit (route a stored table to a second output destination). `ADDTAB` (wave merge), `BANKED_TABLE` (side-by-side), and `MANIP` (cell arithmetic / derived tables, e.g. `T1 − T2`, index, share) are **implemented** — see [§20](tables.md#cross-table). |
 | **Extra significance** | chi-square, t-test (pairs), Kolmogorov-Smirnov, Mann-Whitney. `SIG_TAILS`, `SIG_CORRECTION bh` (Benjamini–Hochberg FDR), and `SIG_MEAN_TEST exact_t` are **implemented** — see [§28](reference-details.md#sig-strategy). |
 | **More COMPUTE** | `round(x, n)` decimals; `log` / `exp` / `floor` / `ceil` / `clip`; conditional `COMPUTE … WHERE`. |
-| **Output formats** | Word (`.docx`), PDF, PowerPoint; Triple-S / XtabML export. |
+| **Output formats** | Word (`.docx`), PDF; Triple-S / XtabML export. PowerPoint is **implemented** — see [§23](output.md#cli). |
 | **Multi-file (more)** | Chained append-then-join; `RENAME` / suffix to resolve `JOIN` column clashes; right / outer joins. |

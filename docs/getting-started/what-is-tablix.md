@@ -119,7 +119,7 @@ When you run a script, Tablix walks these steps in order:
    ├─ 5. Run data preparation in script order  → DERIVE / EDIT / RECODE / STACK …
    ├─ 6. Build each TABLE                       → counts, %, stats, significance
    │
-   └─ Output:  plain text  ·  tagged CSV  ·  styled Excel
+   └─ Output:  plain text  ·  tagged CSV  ·  styled Excel  ·  HTML viewer  ·  PowerPoint deck
 ```
 
 A key idea: **data-preparation statements run in the exact order you write them.**

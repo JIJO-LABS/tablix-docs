@@ -45,9 +45,11 @@ from the command line.
 
 ## 23. Output formats and the CLI {#cli}
 
-Three output formats are available: **plain text** (to stdout), **tagged CSV**, and
-**styled Excel**. The CLI `export` command selects format by output-file extension
-(`.csv` is the default; `.xlsx` triggers the Excel renderer).
+Five output formats are available: **plain text** (to stdout), **tagged CSV**,
+**styled Excel**, an **interactive HTML viewer**, and a **charted PowerPoint
+topline deck**. The CLI `export` command selects format by output-file extension
+(`.csv` is the default; `.xlsx` triggers Excel; `.html` triggers the HTML viewer;
+`.pptx` triggers the PowerPoint deck).
 
 ### Plain text (`mrscript run`)
 
@@ -162,6 +164,58 @@ all tables on a single "Tables" sheet (`single_sheet` layout).
 | `teal` | Teal / green palette |
 | `minimal` | No background colours — black-on-white only |
 
+### Charted PowerPoint deck (`mrscript export … .pptx`) {#pptx}
+
+A different **deliverable** from the other four, not just a different file type.
+The Excel/CSV/HTML/text outputs are the full tab book — every stub, every banner
+column. The PowerPoint deck is a client-ready **topline presentation**: one chart
+per question, not a table pasted onto a slide. Charts are native, editable
+PowerPoint objects (built with [python-pptx](https://python-pptx.readthedocs.io/)),
+so the client's own team can recolour or restyle them — never a picture of a chart.
+
+```sh
+mrscript export script.mrs deck.pptx
+mrscript export script.mrs deck.pptx --theme blue
+```
+
+**One slide per (STUBS/DISTRIBUTION section × banner segment).** A table with
+`STUBS $q1 BANNER $gender, $region` produces two slides — "by Gender" and "by
+Region" — each plotting Total plus that segment's columns. A banner-less table
+produces one Total-only slide. Each slide carries:
+
+- The table number, title, "by \<segment\>" subheading, and a `Base:` line.
+- A native **bar** chart (long or many labels) or **column** chart (few short
+  labels), one series per banner column, Total included by default (respects
+  `SHOW_TOTAL false`).
+- A direct data label on every bar — the percentage (or count, when the table's
+  `STATS` has no `col_pct`), bolded and carrying the significance letter(s) when
+  that cell is flagged, e.g. `45% B`.
+- NET rows render as a **text callout** under the Base line by default (a "NET
+  98%" bar beside 20–30% bars would dominate the chart) rather than as bars.
+- A footnote naming the confidence level and comparison scope when significance
+  is present, and noting when rows or banner columns were trimmed (below).
+
+!!! warning "Only plain banner tables are charted in v1"
+
+    `TYPE GRID`, `TYPE SUMMARY` / `TYPE TURF` value-row tables, numeric sections
+    (incl. `INDEX` / `MANIP` computed-value tables), and `STATS_ONLY` tables are
+    **skipped** — never rendered badly — with a warning printed after export (and
+    shown in the desktop's Problems panel). Those tables still render fully in the
+    Excel / CSV / HTML / text outputs; the PowerPoint deck is a curated subset, not
+    the complete record.
+
+Two limits keep a chart readable:
+
+| Limit | Default | Behaviour past the limit |
+|-------|---------|---------------------------|
+| Banner columns charted per segment | 3 (excl. Total) | Falls back to a Total-only chart for that segment, with a footnote pointing to the Excel tab book for the full banner. |
+| Stub rows charted per section | 12 | Shows the first 12 (in script / `SORT` order), with a footnote noting how many rows were cut. |
+
+No grammar changes — this is a CLI/renderer feature, so no script edits are needed
+to use it. A future `CHART bar|column|stacked` clause (letting the author declare
+intent instead of the size heuristics above, and unlocking diverging stacked bars
+for Likert scales) is planned but not yet built.
+
 ### Command-line interface
 
 ```powershell
@@ -176,7 +230,11 @@ mrscript run script.mrs \                     # Override SET values from outside
 mrscript export script.mrs report.csv         # Execute; write tagged CSV.
 mrscript export script.mrs report.xlsx        # Execute; write styled Excel.
 mrscript export script.mrs report.html        # Execute; write HTML viewer.
+mrscript export script.mrs deck.pptx          # Execute; write a charted topline
+                                              #   PowerPoint deck.
 mrscript export script.mrs report.xlsx --theme blue --layout single_sheet
+                                              #   --theme applies to .xlsx/.html/.pptx;
+                                              #   --layout is .xlsx only.
 mrscript export script.mrs report.csv --data data.sav
 
 mrscript export-data script.mrs clean.sav     # Write the transformed data out.

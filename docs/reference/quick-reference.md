@@ -13,8 +13,10 @@ SET   DEFINE … END DEFINE   CALL          (text substitution + macro inlining)
 ```text
 #for … #endfor   #if / #elif / #else … #endif   #set   #include   (## escapes #)
 #// comment                                                          (comment — stripped at transpile time, whole-line or inline)
+#set NAME = [ item, item, ]                                          (bracketed list — may span lines; a bare // is a comment inside it)
 Loop sources   inline list · #set list · lo..hi range · SHEET("f","Tab") · CSV("f")
 Interpolation  {name}  {row.column}  {loop.index|count|first|last}
+               {name}  on a list pastes it back as "a, b, c" (unquoted);  {name[i]} indexes it, 1-based
 ```
 
 ### Top-level statements
@@ -33,6 +35,7 @@ EXPECT                                            (routing assertions / data QC)
 ```text
 END CONFIG   END FORMAT   END VARIABLE   END DERIVE   END STACK   END AGGREGATE
 END TABLE    END BANNER   END DEFINE   END RIM   END AUTOTAB   ENDNET   ENDHEADING   ENDSCOPE
+                                                              (ENDNET / ENDHEADING also as two words: END NET / END HEADING)
 ```
 
 ### Clauses by block
@@ -44,17 +47,17 @@ END TABLE    END BANNER   END DEFINE   END RIM   END AUTOTAB   ENDNET   ENDHEADI
 | `APPEND` | `AS @var` (produces a source-tag variable) |
 | `MERGE` | `AS`  `SHEET`  `ON`  `KEY`  `PREFIX`  `TYPE` (left \| inner) — chainable, in-script-order file join |
 | `CONFIG` | `OUTPUT`  `SIG_CONFIDENCE`  `SIG_CORRECTION` (none \| bonferroni \| bh)  `SIG_COMPARE`  `SIG_TAILS` (1 \| 2)  `SIG_MEAN_TEST` (exact_t \| normal)  `SIG_DEFF`  `MISSING_TREATMENT`  `DEFAULT_STATS`  `SUPPRESS_STACKED_SIG`  `SUPPRESS_GRID_SIG`  `SUPPRESS_WAVE_SIG` |
-| `FORMAT` / `TABLE` shared | `STATS`  `BANNER`  `WEIGHT`  `BASE_LABEL`  `BASE_DESCRIPTION`  `FOOTER`  `THOUSANDS_SEPARATOR`  `MIN_BASE`  `CONFIDENTIAL`  `BLANK_SUPPRESS`  `SUPPRESS_EMPTY`  `AUTONUMBER`  `RANKING`  `SORT` (`ASC`/`DESC`/`ON`/`TOTAL`)  `SHOW_TOTAL`  `MAX_COL_WIDTH`  `DECIMALS`  `PCT_DECIMALS`  `COUNT_DECIMALS`  `MEAN_DECIMALS`  `PCT_SIGN`  `NPS PROMOTERS lo..hi DETRACTORS lo..hi`  `NPS_DECIMALS` |
+| `FORMAT` / `TABLE` shared | `STATS`  `BANNER`  `WEIGHT`  `BASE_LABEL`  `SIG_ROW_LABEL`  `BASE_DESCRIPTION`  `FOOTER`  `THOUSANDS_SEPARATOR`  `MIN_BASE`  `CONFIDENTIAL`  `BLANK_SUPPRESS`  `SUPPRESS_EMPTY`  `AUTONUMBER`  `RANKING`  `SORT` (`ASC`/`DESC`/`ON`/`TOTAL`)  `SHOW_TOTAL`  `MAX_COL_WIDTH`  `DECIMALS`  `PCT_DECIMALS`  `COUNT_DECIMALS`  `MEAN_DECIMALS`  `PCT_SIGN`  `NPS PROMOTERS lo..hi DETRACTORS lo..hi`  `NPS_DECIMALS` |
 | `TABLE`-only | `STUBS`  `DISTRIBUTION`  `ADD`  `SECTION LABEL`  `LEVEL`  `BASE`  `FILTER`  `SHEET`  `STATS_ONLY`  `NAME`  `INDEX` (`ON $var=code` \| `ON TOTAL`) |
 | `GRID` table | `TYPE GRID`  `COLUMN`  `LABEL`  `FILTER`  `ANSWERED_BASE` |
-| `SUMMARY` table | `TYPE SUMMARY`  `STATEMENTS`  `MEASURE` (`TOP`/`BOTTOM`/`NET`/`mean`/`median`/`nps`/…)  `SCALE` |
+| `SUMMARY` table | `TYPE SUMMARY`  `STATEMENTS` (`@a TO @z` expands a numbered run)  `MEASURE` (`TOP`/`BOTTOM`/`NET`/`mean`/`median`/`nps`/…)  `SCALE`  (`LEVEL` must be explicit — never inferred) |
 | `TURF` table | `TYPE TURF`  `ITEMS`  `SIZE k`/`SIZE lo..hi`  `REPORT` (reach \| incremental \| frequency)  `METHOD` (exact \| greedy \| auto) |
-| `VARIABLE` | `LABEL`  `TYPE`  `VALUE`  `MISSING`  `STATS_EXCLUDE`  `SCORE` |
-| `DERIVE` | `LABEL`  `TYPE`  `SCORE`  `STUB`  `NET`  `ENDNET`  `HEADING`  `ENDHEADING` |
+| `VARIABLE` | `LABEL`  `TYPE`  `VALUE`  `MISSING`  `STATS_EXCLUDE`  `SCORE` (`code = value`, or `lo..hi` for identity scores) |
+| `DERIVE` | `LABEL`  `TYPE`  `SCORE` (`code = value` \| `lo..hi`)  `STUB`  `NET`  `ENDNET`  `HEADING`  `ENDHEADING` |
 | `STUB` display props | `DISPLAY` (pct_only \| count_only \| row_pct)  `SUPPRESS`  `CUMULATIVE`  `DECIMALS`  `KEEP_IF_ZERO` |
 | `SPREAD` | `FROM $slot1, $slot2, …`  `CODES lo..hi \| c1,c2,…`  `LABEL` — reassemble multiple-category ("spread") slots into one multi-response `@var` |
 | `COMBINE` | `FROM var1, var2, …`  `LABEL` — merge same-codeframe `$`/`@` variables (different groups/waves) into one multi-response `@var` |
-| `STACK` (single-axis) | `POSITIONS`  `MAP`  `FROM` |
+| `STACK` (single-axis) | `POSITIONS`  `MAP`  `FROM`  `MAP @x = POSITION` (the row's own slot number) |
 | `STACK` (multi-axis) | `AXIS`  `AT`  `DROP EMPTY`  `NULL`  (also `MAP`  `FROM`) |
 | `EDIT` / `RECODE` | `SET`  `WHERE`  `INTO`  `ELSE`  (`->`) |
 | `COMPUTE` functions | `round`  `abs`  `sqrt`  `min`  `max`  `count(@listvar)` (#selected codes in a multi-response var) |
@@ -71,7 +74,7 @@ END TABLE    END BANNER   END DEFINE   END RIM   END AUTOTAB   ENDNET   ENDHEADI
 
 | Group | Values |
 |-------|--------|
-| Condition keywords | `AND`  `OR`  `NOT`  `IN`  `BETWEEN`  `ALL` |
+| Condition keywords | `AND`  `OR`  `NOT`  `IN` (elements may be ranges: `IN (1..8, 99)`)  `BETWEEN`  `ALL` |
 | STATS values | `n`  `col_pct`  `row_pct`  `weighted_n`  `sig`  `mean`  `std_dev`  `std_error`  `median`  `quartile(N)`  `mode`  `sum`  `sum_of_squares`  `error_variance`  `nps` |
 | Type values | `single_punch`  `multi_punch`  `numeric`  `open_end`  `multi_binary` |
 | Variable prefixes | `$` (source)  `@` (derived)  `%RESPID` (respondent key) |

@@ -153,9 +153,20 @@ fixed single-column, single-file layout.
 
 ### Styled Excel (`mrscript export … .xlsx`)
 
-An openpyxl-generated workbook. All tables start with an **INDEX** sheet (with
-hyperlinks to each table), followed by one sheet per table (`multi_sheet` layout) or
-all tables on a single "Tables" sheet (`single_sheet` layout).
+An openpyxl-generated workbook. All tables start with an **Index** sheet (with
+hyperlinks to each table), followed by either:
+
+- **`multi_sheet`** (default) — one worksheet per table.
+- **`single_sheet`** — all tables split onto a **Count** sheet (`n` /
+  `weighted_n` stats) and a **Percentage** sheet (`col_pct` / `row_pct`
+  stats); a table with only one kind of stat appears on that sheet alone.
+  Mean/Std Dev/… summary rows appear on both sheets. A table that mixes
+  count **and** pct stats carries **no significance on its Count-sheet
+  copy** (no sig rows, no `(A)`-style header letters, no Mean-row sig) — the
+  letters compare column proportions/means, not raw counts, and would
+  otherwise exactly duplicate the Percentage sheet's sig rows; the
+  Percentage copy keeps sig in full. A table on the Count sheet only (no
+  pct stats requested) keeps its own sig.
 
 | Theme | Look |
 |-------|------|

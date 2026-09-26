@@ -135,6 +135,7 @@ the table level ([§17](tables.md)). One `FORMAT` block per script.
 | `BANNER Name` | Default named banner (defined by [§18](tables.md#named-banner)). |
 | `WEIGHT $weight_var` | Default weight variable. |
 | `BASE_LABEL 'text'` | Rename the base/respondents row. |
+| `SIG_ROW_LABEL 'text'` | Label on the dedicated significance-letter row. Default: "Sig indicator" (xlsx/html), blank (text). `''` leaves the label cell blank while the letters row still renders. |
 | `BASE_DESCRIPTION 'text'` | Set the `Base: …` identity line for every table (overridable per `TABLE`; both win over `SCOPE LABEL` — see [§19](tables.md#base-description)). |
 | `FOOTER 'text'` | Append a line below every table. |
 | `THOUSANDS_SEPARATOR true\|false` | Comma-group large counts (e.g. `1,234`). |
@@ -198,6 +199,7 @@ that carry no labels. All clauses are optional. A sidecar `CODEBOOK`
 | `MISSING code [, …]` | Declare codes as missing — excluded from **rows, base and summary stats together** (the stub is removed). SPSS missing metadata is **not** auto-applied. |
 | `STATS_EXCLUDE code [, …]` | Declare codes as non-response **sentinels**: excluded from summary stats **only**. The code keeps its own labelled row with a real count and stays in the base. See below. |
 | `SCORE code = value` | Numeric score for a code, used by mean / std summaries. Declaring *any* `SCORE` switches the variable to **explicit mode** — a code you don't score drops out of the mean. With **no** `SCORE` at all, each code is its own score (code-as-score). |
+| `SCORE lo..hi` | Shorthand for the **identity** run — `SCORE 1..5` is exactly `SCORE 1 = 1  SCORE 2 = 2  SCORE 3 = 3  SCORE 4 = 4  SCORE 5 = 5`. Use it to put a scale into explicit mode without writing a line per point; a scale that needs *different* point values (reverse scoring, `1 = -100`) still needs the `code = value` form. |
 
 ### `MISSING` vs `STATS_EXCLUDE` {#missing-vs-stats-exclude}
 
@@ -260,9 +262,15 @@ END VARIABLE
 ```
 
 ```mrs
-// Reverse scoring for a mean
+// Reverse scoring for a mean — each code needs its own value, so no range here
 VARIABLE $S12b
   LABEL 'Brushing frequency'
   SCORE 1 = 5   SCORE 2 = 4   SCORE 3 = 3   SCORE 4 = 2   SCORE 5 = 1
+END VARIABLE
+
+// A straight 1-7 agreement scale scores itself — one clause does it
+VARIABLE $S14
+  LABEL 'Agreement (1 = disagree … 7 = agree)'
+  SCORE 1..7
 END VARIABLE
 ```

@@ -359,16 +359,25 @@ STACK @trial
   POSITIONS 1..3
   MAP @product = $I_#_Product_Shown
   MAP @overall = $I_#_Q1
+  MAP @pos     = POSITION            // 1/2/3 — which exposure this row is
 END STACK
 
 TABLE 'Liking by product'
   LEVEL @trial  STUBS @overall  BANNER @product
 END TABLE
 
+TABLE 'Liking by product — first exposure only'   // order-effect check
+  LEVEL @trial  STUBS @overall  BANNER @product  FILTER @pos = 1
+END TABLE
+
 TABLE 'Reach (unique respondents)'
   LEVEL @trial  STUBS @product  BASE respondents
 END TABLE
 ```
+
+Note which tables carry `BASE respondents`: the reach table counts people, the liking
+tables count evaluations, and that is a per-table decision — see
+[Choosing the base on a stacked table](../reference/tables.md#stacked-base).
 
 See [STACK](../reference/data-preparation.md#stack).
 

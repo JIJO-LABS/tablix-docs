@@ -199,7 +199,7 @@ END TABLE
 
 | Clause | Meaning |
 |--------|---------|
-| `STATEMENTS v1, v2, …` | The battery variables — one **row** each, inside every measure block. Each uses its variable label as the row label. Categorical or numeric (not open-end). |
+| `STATEMENTS v1, v2, …` | The battery variables — one **row** each, inside every measure block. Each uses its variable label as the row label. Categorical or numeric (not open-end). A run of consecutively-numbered variables can be written `@Q41_1 TO @Q41_13` instead of listing all of them ([below](#statements-range)). |
 | `MEASURE TOP n ['Label']` | The **n highest** scale points (e.g. `TOP 2` on a 1-5 scale = codes 4,5). |
 | `MEASURE BOTTOM n ['Label']` | The **n lowest** scale points (`BOTTOM 2` = codes 1,2). |
 | `MEASURE NET (a, b, …) ['Label']` | An **explicit** code set — any box, not just the ends (e.g. `NET (3)` = the neutral midpoint). |
@@ -222,7 +222,28 @@ respondents).
 
 Significance runs over the **banner columns** as for a normal table (box rows:
 column-proportion *z*; Mean rows: Welch *t*). `SORT` reorders statements within each
-block. `LEVEL` (stacked) summary tables are not supported.
+block.
+
+A summary table **can** run against a stacked frame, but `LEVEL @stack` must be written
+on it explicitly — `STATEMENTS` is not a row-axis clause, so it never drives
+[level inference](data-preparation.md#stack). A battery of stacked `DERIVE`s with no
+`LEVEL` clause fails with the statement variables reported as not found.
+
+#### Statement ranges — `TO` {#statements-range}
+
+A 13-statement battery listed in full makes for a long, error-prone line. Where the
+variable names end in consecutive numbers, `TO` expands the run, SPSS-style:
+
+```mrs
+STATEMENTS @Q41_1 TO @Q41_13        -- exactly @Q41_1, @Q41_2, … @Q41_13
+STATEMENTS @s0, @s1 TO @s9, @s_other   -- singles and ranges may mix freely
+```
+
+Expansion is on the **trailing number** only, so both ends must share the same prefix
+(`@Q41_1 TO @Q42_6` is an error rather than a guess), and zero-padding on the lower bound
+is preserved (`@q01 TO @q12` yields `@q01 … @q12`). The range is expanded before
+validation, so a name in the middle of the run that does not exist is reported exactly as
+it would be if you had typed the list out by hand.
 
 **Worked example.** With three 1-5 rating items — `rate_1=[3,4,5,3,2,4]`,
 `rate_2=[3,3,4,3,4]` (one non-response), `rate_3=[3,5,3,3,1,4]`:
@@ -343,18 +364,25 @@ merge (`STATS + …`).
 | `FILTER condition` | Row filter for this table only; AND-ed with any enclosing `SCOPE`. |
 | `WEIGHT $weight_var` | Apply probability weights to this table (adds weighted_n / effective base). |
 | `LEVEL @stack_name` | Tabulate against a stacked frame ([§12](data-preparation.md#stack)). Optional — inferred from the variable names when omitted; explicit `LEVEL` takes precedence. |
-| `BASE respondents` | Unique-respondent base. On a `LEVEL` table it corrects for rotation; on a non-stacked table it de-duplicates by `%RESPID` (which must be declared). |
+| `BASE respondents` | Count **unique respondents** instead of rows. On a non-stacked table it de-duplicates by `%RESPID` (which must be declared). On a `LEVEL` table it is a **per-table** decision, right for some tables and wrong for others — see [Choosing the base on a stacked table](#stacked-base). |
 | `SHEET 'tab name'` | Target worksheet name in Excel output (no effect on text output). |
 | `NAME 'handle'` | Register this table in the table store under `handle` instead of its title, so a cross-table op ([§20](#cross-table)) can address it. Names must be unique within the script. |
 | `SHOW_TOTAL true\|false\|'Label'` | Show (default), hide, or relabel the leading Total column. The Total column is excluded from significance lettering. |
 | `SHOW_SCORES true\|false` | Append each leaf stub's contributing score value in brackets after its label (e.g. `Agree [4]`) — but **only on a table whose `STATS` requests `mean`**; a table without `mean` never shows brackets regardless. The value is the code's declared `SCORE`, or the raw code itself when the variable has no `SCORE` declared anywhere; a code left unscored on a partially-scored variable shows no bracket. NETs and HEADINGs are never annotated. Default **true**. |
 
 Other `FORMAT` directives may also appear at table level (overriding the `FORMAT`
-default here): `BASE_LABEL`, `BASE_DESCRIPTION` ([§19 Overriding the Base: line](#base-description)),
+default here): `BASE_LABEL`, `SIG_ROW_LABEL`, `BASE_DESCRIPTION` ([§19 Overriding the Base: line](#base-description)),
 `FOOTER`, `THOUSANDS_SEPARATOR`, `MIN_BASE`,
 `CONFIDENTIAL`, `BLANK_SUPPRESS`, `SUPPRESS_EMPTY`, `AUTONUMBER`, `RANKING`,
 `SORT` ([§17 Sorting rows](#sorting)), `MAX_COL_WIDTH`, `DECIMALS`, `PCT_DECIMALS`,
 `COUNT_DECIMALS`, `MEAN_DECIMALS`, `PCT_SIGN`.
+
+`SIG_ROW_LABEL 'text'` sets the label on the dedicated significance-letter row
+(the row of A/B/C letters beneath a distribution/NET row or a Mean/summary
+row). Default: "Sig indicator" in xlsx/html; blank in the text renderer. An
+explicit `SIG_ROW_LABEL ''` leaves the label cell blank while the letters row
+itself still renders — distinct from leaving the directive unset. CSV output
+is unaffected (its sig rows carry a `row_type` column, not a display label).
 
 ```mrs
 TABLE 'T7. Oral-care concerns by age'
@@ -368,6 +396,50 @@ TABLE 'T7. Oral-care concerns by age'
   BASE_LABEL     'Total respondents'
 END TABLE
 ```
+
+### Choosing the base on a stacked table — `BASE respondents` {#stacked-base}
+
+On a stacked (`LEVEL`) table the unit of analysis is an **evaluation** — a respondent ×
+slot — so the default row count is what most tables want, and `BASE respondents` is a
+per-table override rather than a report-wide setting. Set it on the wrong table and the
+numbers stay plausible while meaning something else, so it is worth being deliberate.
+
+**Where it is needed.** A respondent-level stub on a banner column that pools slots: the
+same person contributes two or three rows, so `n` is a count of evaluations dressed up as
+a count of people. `BASE respondents` restores the headcount. This is the case the
+[grain-aware advisory](data-preparation.md#stack) reports, and it now names the column.
+
+**Where it silently changes nothing visible.** On a respondent-level stub, rows mode
+inflates the numerator *and* the base by the same slot count, so with a uniform number of
+slots per respondent the **percentages are identical either way** — only the base line
+reveals the problem:
+
+| | `n` (Total) | `n` (Female) | col % Female |
+|---|---|---|---|
+| rows (default), 400 respondents × 3 packs | 1200 | 600 | 50% |
+| `BASE respondents` | 400 | 200 | 50% |
+
+Two consequences: a table can look perfectly healthy and still report a base three times
+the sample, and `MIN_BASE` is measured against the inflated figure, so a suppression rule
+you rely on can quietly stop firing. (With a *non-uniform* number of slots per respondent
+the percentages shift too, because respondents with more slots carry more weight.)
+
+**Where it is outright wrong.** On a genuinely evaluation-level variable — a rating that
+each pack receives on its own — respondents *should* count once per evaluation, because
+each evaluation is a separate observation. Forcing a respondent base turns a distribution
+into an **overlapping reach measure**: "Excellent" stops meaning "45% of evaluations were
+Excellent" and starts meaning "84% of people rated at least one pack Excellent", and the
+column sums past 100% (221% in one measured case). Both numbers are meaningful; only one
+of them is a distribution.
+
+!!! tip "The rule of thumb"
+
+    Ask what a single row of the table means. If the row is a **person** (demographics,
+    screener questions, penetration) and any column pools their slots, use
+    `BASE respondents`. If the row is an **evaluation** (how this pack scored), leave the
+    default. Because both kinds of table usually live in the same report, put the clause
+    on the tables that need it rather than in `FORMAT` — a report-wide default is wrong
+    for one group or the other.
 
 ### Sorting rows — SORT {#sorting}
 

@@ -249,7 +249,7 @@ authoring layer does not recognise is passed through untouched.
 | `#for NAME in <source>` … `#endfor` | Loop; nestable |
 | `#if <cond>` … `#endif` | Conditional |
 | `#elif <cond>` / `#else` | Extra branches within an `#if` |
-| `#set NAME = <value>` | Bind a value (scalar or comma list) |
+| `#set NAME = <value>` | Bind a value (scalar or comma list); `= [ … ]` may span lines ([below](#set-brackets)) |
 | `#include "file.mrst"` | Inline another `.mrst` file |
 | `#// comment text` | Authoring-layer comment (see below) |
 
@@ -258,6 +258,34 @@ There is no generic `#end`; a mismatched closer is an error, so nesting stays
 unambiguous. A `#set` scalar is read as `{NAME}`; a comma value
 (`#set brands = coke, pepsi`) is a list that `#for` can iterate; a quoted value keeps
 its commas (`#set t = "A, B"` is one scalar).
+
+### Long lists across several lines — `#set NAME = [ … ]` {#set-brackets}
+
+A list of 13 statement labels on one physical line is unreadable and unreviewable in a
+diff. Wrap the value in brackets and it may span as many lines as you like:
+
+```mrs
+#set Q41_LABELS = [
+  "Easy to open",             // one item per line
+  "Comfortable to hold",      // each with its own trailing comment
+  "Right size for my fridge"  #// '#//' works here too
+]
+```
+
+The lines are joined with single spaces into **exactly the string a one-line `#set`
+would have held**, so nothing downstream needs to know the bracket form exists — `#for`
+iteration and `{NAME[i]}` indexing behave identically. Three things to know:
+
+* **Each item carries its own comma.** The join adds spaces, not commas — a line
+  without a trailing comma is glued onto the next item.
+* **A bare `//` is a comment here**, unlike anywhere else in a `#set` value. An ordinary
+  one-line `#set` treats `//` as data, because the value may legitimately be a URL or a
+  UNC path (`#set u = https://x.test/a`); a bracketed list holds plain label text, where
+  a stray `// note` is far more likely than a literal `//`. Quoted items are still
+  protected, so `"a // b"` survives intact.
+* Closing is by a line **ending in `]`**, not real bracket matching, so a literal
+  `[` or `]` inside an item isn't supported. `[ … ]` all on one line is accepted too,
+  as a purely cosmetic wrapper.
 
 ### Authoring-layer comments {#authoring-layer-comments}
 
@@ -314,22 +342,35 @@ fully blank row is skipped; integer cells drop a trailing `.0`.
 Unknown `{tokens}` pass through unchanged. `{loop.index}` is the table-numbering
 counter.
 
-!!! warning "A comma in a `#set` value makes it a list"
+!!! note "A comma in a `#set` value makes it a list — and a bare `{name}` pastes it back"
 
-    `#set` splits on commas to build the lists `#for` iterates, so a bare
-    `{name}` renders the *list*, not the text you wrote:
+    `#set` splits on commas to build the lists `#for` iterates. A bare `{name}`
+    (no `[INDEX]`) re-joins that list with `", "`, which is the text you wrote:
 
     ```
     #set SCALE = STATS n, col_pct, mean      // → a 3-item list
-    TABLE 'T' STUBS $q1 {SCALE} END TABLE    // → STATS n', 'col_pct', 'mean' …
+    TABLE 'T' STUBS $q1 {SCALE} END TABLE    // → STATS n, col_pct, mean
     ```
 
-    For a clause bundle that contains commas, use the MRScript **`SET`**
-    ([above](#clause-bundles)) rather than the authoring layer's `#set`: `SET`
-    is a plain text swap with no list semantics. Because unknown `{tokens}` pass
-    through the transpiler untouched, a `SET` written in a `.mrst` survives into
-    the generated `.mrs` and is resolved there — so both layers coexist. Use
-    `#set` for comma-free values and loop lists, `SET` for text bundles.
+    So a clause bundle round-trips, and `#set` is fine for one. Only the
+    whitespace around each comma is normalised.
+
+    **The one thing that does not survive: quotes.** Each item is unquoted when
+    it is stored, so pasting the whole list back loses them — and a quoted item
+    that itself contains a comma becomes indistinguishable from two items:
+
+    ```
+    #set LABELS = "First one", "Second, with comma", "Third"
+    // {LABELS}     → First one, Second, with comma, Third   ← 4 commas, quotes gone
+    // {LABELS[2]}  → Second, with comma                     ← intact
+    ```
+
+    Label lists are therefore addressed by index (`{LABELS[{i}]}` inside a `#for`),
+    and MRScript's own **`SET`** ([above](#clause-bundles)) remains the better fit
+    when a value must stay byte-identical, since it is a plain text swap with no
+    list semantics at all. Because unknown `{tokens}` pass through the transpiler
+    untouched, a `SET` written in a `.mrst` survives into the generated `.mrs` and
+    is resolved there — so both layers coexist.
 
 ### Conditions (`#if` / `#elif`)
 

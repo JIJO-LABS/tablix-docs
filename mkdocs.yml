@@ -78,6 +78,12 @@ markdown_extensions:
 plugins:
   - search
 
+# CI builds with --strict, which turns these warnings into a failed deploy.
+# Anchors are not checked by default, so a link to a #section that has been
+# renamed or removed would publish silently broken; verified clean when added.
+validation:
+  anchors: warn
+
 extra_css:
   - stylesheets/extra.css
 

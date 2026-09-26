@@ -215,7 +215,7 @@ Conditions appear after `WHERE` in `STUB`, `EDIT`, `KEEP`/`DROP ROWS`, `FILTER`,
 | Form | Syntax | Examples |
 |------|--------|----------|
 | Simple comparison | `$var OP value` — `OP ∈ = != > >= < <=` | `$AGE_CAT = 2`, `$q1 >= 4`, `$score != 99` |
-| Set membership | `$var IN (v1, v2, …)` | `$q1 IN (4, 5)`, `$region IN (1, 2, 3)` |
+| Set membership | `$var IN (v1, v2, …)` — an element may be a range `lo..hi`, mixed freely with singles | `$q1 IN (4, 5)`, `$region IN (1, 2, 3)`, `$s IN (1..8, 99)`, `$q1 IN (1..3, 7, 9..10)` |
 | Range (inclusive) | `$var BETWEEN lo AND hi` | `$age BETWEEN 25 AND 34` |
 | Logical | `cond AND cond`, `cond OR cond`, `NOT cond`, `(cond)` | `$gender = 1 AND $age >= 30` |
 | Catch-all | `ALL` — matches every row | `STUB 9 'Everyone' WHERE ALL` |
@@ -284,9 +284,11 @@ base_n[col] = count( banner_col_mask AND valid_mask )
 | `weighted_n` | Sum of weights |
 | `effective_n` | Kish effective base: (Σw)² / Σ(w²) |
 
-**Respondent base** — `BASE respondents` counts unique respondents (by `%RESPID`). On
-a stacked (`LEVEL`) table it corrects for rotation; on a non-stacked table it
-de-duplicates rows.
+**Respondent base** — `BASE respondents` counts unique respondents (by `%RESPID`)
+instead of rows. On a non-stacked table it de-duplicates rows. On a stacked (`LEVEL`)
+table it is a per-table judgement — right for a respondent-level row on a pooled column,
+wrong for an evaluation-level distribution, and invisible in the percentages either way:
+see [Choosing the base on a stacked table](tables.md#stacked-base).
 
 ---
 

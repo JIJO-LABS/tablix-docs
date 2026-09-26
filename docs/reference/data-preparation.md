@@ -10,10 +10,15 @@ untouched; those that target an existing column (in place) change its values.
 
 ```mrs
 DERIVE @var_name
-  [LABEL 'text'] [TYPE type_value] [SCORE code = value ...]
+  [LABEL 'text'] [TYPE type_value] [SCORE code = value ... | SCORE lo..hi]
   (STUB ... | NET ... ENDNET | HEADING ... ENDHEADING)*
 END DERIVE
 ```
+
+`SCORE lo..hi` is shorthand for the identity run (`SCORE 1..5` = `SCORE 1 = 1` …
+`SCORE 5 = 5`), which is the usual case for a rating scale; a scale needing different
+point values still takes one `SCORE code = value` per code. Same clause, same meaning as
+on a [`VARIABLE` block](setup-blocks.md#variable).
 
 Creates a new `@variable` from condition-based stubs. A derived variable is
 **multi-response**: a respondent's value is the **list** of every stub code whose
@@ -27,6 +32,15 @@ The new column can be used as `STUBS` or `BANNER`, or referenced by a later
 stub's set even when stubs overlap. The variable's base is the **union** of its stubs
 (respondents coded on at least one listed item); mean / score summaries explode the
 list (one scored response per code).
+
+**`LABEL 'text'`** (optional) is the derived variable's own display label — it drives
+the section header when the var is used in `STUBS`, and, for a flat (non-crossed)
+`BANNER`, the group band shown above that segment's columns. Omit it and the bare
+`@name` is used instead. An explicit `LABEL ''` is **not** the same as omitting it: it
+means "no header for this segment" — every renderer (text/CSV/HTML/xlsx) skips the
+header band (and its underline) entirely rather than drawing a blank one. This is
+distinct from a `STUB`'s own label below, which names that stub's row, not the
+variable.
 
 ### 11a. STUB (row definition)
 
@@ -85,24 +99,27 @@ Placed between the code/props and `WHERE`:
 ```mrs
 NET [ANY | ALL] 'label'
   (STUB ... | NET ... | HEADING ...)*
-ENDNET
+ENDNET                                  -- or: END NET
 ```
 
 - `ANY` (default) — net = respondents matching at least one member (de-duplicated).
 - `ALL` — net = respondents matching every member (intersection).
 
-NETs may nest to any depth.
+NETs may nest to any depth. The closer may be written either as one word (`ENDNET`) or
+as two (`END NET`) — they are the same token to the parser, so pick whichever reads
+better next to the `END TABLE` / `END DERIVE` closers around it and stay consistent.
 
 ### 11d. HEADING blocks — display-only label rows
 
 ```mrs
 HEADING 'label'
   (STUB ... | NET ... | HEADING ...)*
-ENDHEADING
+ENDHEADING                              -- or: END HEADING
 ```
 
 A `HEADING` renders a label row with blank cells (no evaluator, no counts) — a section
-divider inside the stub list. Children render indented beneath it.
+divider inside the stub list. Children render indented beneath it. As with `ENDNET`,
+`END HEADING` is accepted as the two-word spelling.
 
 ### Example — nets, headings, and display props together
 
@@ -277,6 +294,7 @@ STACK @name
   POSITIONS lo .. hi
   MAP @target = $source_#              (placeholder form — $ vars only)
   MAP @target FROM $v1, $v2, ...       (explicit list — $ or @ vars)
+  MAP @target = POSITION               (the row's own slot number — no source read)
   [MAP @target FROM $v1, $v2, ...  SCORE code = value ...]
 END STACK
 ```
@@ -286,9 +304,39 @@ END STACK
 | `POSITIONS lo .. hi` | Declares the slot range, e.g. `POSITIONS 1..3` → 3 slots. |
 | `MAP @target = $prefix_#` | The `#` placeholder expands to each position: `$I_#_Q1` → `$I_1_Q1, $I_2_Q1, $I_3_Q1`. Source variables only (`$` prefix). |
 | `MAP @target FROM var, var, …` | Explicit source list in slot order. Accepts both `$source` and `@derived` vars. All `MAP` lists must have the same number of sources (`= hi − lo + 1`). |
-| `SCORE code = value` (on any MAP) | Numeric score for the target — for `mean`/`std_dev` on the `LEVEL` table. Inline `SCORE` wins over an inherited source `VARIABLE SCORE` block. |
+| `MAP @target = POSITION` | The target holds the row's own **slot number** (1-based, within `POSITIONS lo..hi`). No source column is read at all — see below. |
+| `SCORE code = value` (on any MAP) | Numeric score for the target — for `mean`/`std_dev` on the `LEVEL` table. Inline `SCORE` wins over an inherited source `VARIABLE SCORE` block. Note the `SCORE lo..hi` range shorthand available on `VARIABLE` and `DERIVE` is **not** accepted here — write one `SCORE code = value` per code, or declare the range on the source `VARIABLE` and let the target inherit it. |
 
-The stacked frame gains one index column, `@name` (values `lo..hi` — the slot number).
+!!! warning "The stack's own name is not an addressable variable"
+
+    The stacked frame internally carries a slot-number column named after the `STACK`
+    itself (`@trial` holds `1..3` for `POSITIONS 1..3`), but it is **not** exposed as an
+    ordinary condition variable — `WHERE @trial = 1` is rejected as an unknown variable.
+
+    Use **`MAP @target = POSITION`** to get a column with the same values that you *can*
+    address:
+
+    ```mrs
+    STACK @trial
+      POSITIONS 1..3
+      MAP @product = $I_#_Product_Shown
+      MAP @pos     = POSITION            // 1, 2 or 3 — which exposure this row is
+    END STACK
+
+    TABLE 'First exposure only'
+      LEVEL @trial   STUBS @product   FILTER @pos = 1
+    END TABLE
+    ```
+
+    This replaces the older workaround of declaring one constant per slot and mapping
+    across them (`COMPUTE @p1 = 1` … `MAP @pos FROM @p1, @p2, @p3`), which is still
+    valid but needs one `COMPUTE` per position.
+
+    The target is a plain **unlabelled numeric** column, exactly as a `COMPUTE` var is,
+    so `STUBS @pos` summarises as Mean / Std Dev rather than giving one row per slot.
+    Use it to `FILTER` (as above) or as a condition. To get it as a labelled stub axis,
+    wrap it in a stacked `DERIVE` with one `STUB` per position
+    (`STUB 1 '1st exposure' WHERE @pos = 1`, …).
 
 ```mrs
 SOURCE 'concept_test.sav'
@@ -325,7 +373,7 @@ END STACK
 
 // This DERIVE runs in @trial's stacked frame — @taste is available here.
 DERIVE @T1_rating 'Overall Liking'
-  SCORE 1=1  SCORE 2=2  SCORE 3=3  SCORE 4=4  SCORE 5=5
+  SCORE 1..5                       // identity scores — same as SCORE 1=1 … SCORE 5=5
   NET 'Top 2 Box (T2B)'
     STUB 5 'Like very much'    WHERE @taste = 5
     STUB 4 'Somewhat like'     WHERE @taste = 4
@@ -343,12 +391,24 @@ TABLE 'T1 - Overall Liking'
 END TABLE
 ```
 
-!!! info "LEVEL auto-detection"
+!!! info "LEVEL auto-detection — and the three cases it deliberately skips"
 
-    - If `STUBS` / `BANNER` vars all map to one stack → that stack's frame is used.
-    - Explicit `LEVEL @name` is still supported and takes precedence.
-    - A table that mixes vars from different stacks in `STUBS` vs `BANNER` should
-      specify `LEVEL` explicitly to avoid ambiguity.
+    Inference reads the **row axis only**: `STUBS`, `DISTRIBUTION`, `ADD`, and a `GRID`
+    table's `COLUMN` vars. If they resolve to exactly one stack, that stack's frame is
+    used. Explicit `LEVEL @name` always takes precedence.
+
+    Three cases are *not* inferred, and each needs `LEVEL` written on the table:
+
+    | Case | Why | Without `LEVEL` |
+    |------|-----|-----------------|
+    | Stacked vars only in the **`BANNER`** | The banner is excluded on purpose, so a respondent-level `STUBS` table is never silently promoted to the stacked frame | Runs on the respondent frame — and fails if the banner var exists only there |
+    | **`TYPE SUMMARY`** batteries | `STATEMENTS` is not a row-axis clause, so it is never read | Same — the battery vars aren't found |
+    | Row vars spanning **two stacks** | Ambiguous, so inference declines rather than guessing | Falls back to the respondent frame |
+
+    The first case is the common one in a rotation study: screener and demographic
+    tables whose stubs are respondent-level but whose banner is the pack / concept being
+    evaluated. Those read as ordinary tables to the eye, so it is worth a comment in the
+    script saying why `LEVEL` is there.
 
 ### 12b. Multi-axis STACK — diary / nested loops
 
@@ -404,13 +464,28 @@ rows under it.
 Rows are sorted **respondent-major**: all of a respondent's slots together in slot
 order, then the next respondent.
 
-!!! danger "Grain-aware warning"
+!!! danger "Grain-aware advisory — and when it stays quiet"
 
-    Each stacked variable carries an internal grain tag. If you use a respondent-level
-    source variable (e.g. `$gender`) as `STUBS` on a `LEVEL` table while counting rows
-    (not `BASE respondents`), the engine warns that counts are inflated by slots per
-    respondent. Use `BASE respondents` for unique-respondent penetration, and
-    occasion-level variables for occasion-level distributions.
+    Each stacked variable carries an internal grain tag. When a `LEVEL` table counts
+    rows (i.e. no `BASE respondents`) and one of its `STUBS` is a **respondent-level**
+    variable such as `$gender`, the engine checks each banner column's own base and
+    warns only if a column really does hold more than one row per respondent:
+
+    ```
+    Table 12: LEVEL table counts rows but '$gender' is respondent-level, and column
+    'TOTAL' pools more than one slot per respondent — counts there are inflated.
+    Use BASE respondents if you meant penetration.
+    ```
+
+    The check matters because the same script shape can be either right or wrong:
+
+    | Banner | Warns? | Why |
+    |--------|--------|-----|
+    | One column per slot value (a column per concept / pack) | **No** | Each respondent contributes exactly one row to each column, so a respondent-level count in it is already a respondent count |
+    | A pooled column — a `Total`, an "all concepts combined", or any column whose condition a respondent can satisfy in more than one slot | **Yes**, naming that column | Those rows are the same person counted two or three times |
+
+    So adding a `Total` column to an otherwise-safe rotation table is exactly what turns
+    a correct table into an inflated one, and the advisory names the column that did it.
 
 **Validation errors from multi-axis STACK**
 

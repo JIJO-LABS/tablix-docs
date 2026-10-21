@@ -45,11 +45,12 @@ from the command line.
 
 ## 23. Output formats and the CLI {#cli}
 
-Five output formats are available: **plain text** (to stdout), **tagged CSV**,
-**styled Excel**, an **interactive HTML viewer**, and a **charted PowerPoint
-topline deck**. The CLI `export` command selects format by output-file extension
-(`.csv` is the default; `.xlsx` triggers Excel; `.html` triggers the HTML viewer;
-`.pptx` triggers the PowerPoint deck).
+Six output formats are available: **plain text** (to stdout), **tagged CSV**,
+**styled Excel**, an **interactive HTML viewer**, a **charted PowerPoint
+topline deck**, and **AI-ready tables** (JSON Lines or Markdown). The CLI `export`
+command selects format by output-file extension (`.csv` is the default; `.xlsx`
+triggers Excel; `.html` triggers the HTML viewer; `.pptx` triggers the PowerPoint
+deck; `.jsonl` / `.md` write the AI-ready tables).
 
 ### Plain text (`mrscript run`)
 
@@ -227,6 +228,150 @@ to use it. A future `CHART bar|column|stacked` clause (letting the author declar
 intent instead of the size heuristics above, and unlocking diverging stacked bars
 for Likert scales) is planned but not yet built.
 
+### AI-ready tables (`mrscript export … .jsonl` / `.md`) {#ai}
+
+Hand a finished deck to an AI assistant without it having to decode a layout made
+for people. The AI-ready export follows one rule: **the AI sees exactly what you
+see — nothing more, nothing less.** Every number is rounded the way the deck rounds
+it, every cell hidden by `MIN_BASE` / `CONFIDENTIAL` stays hidden, every row hidden
+by `SUPPRESS` or `BLANK_SUPPRESS` stays out, and every significance letter is
+translated into the name of the column it points to. (This is also why it is not
+the tagged CSV: that format carries unrounded values and no masks, because an Excel
+macro does the presentation.)
+
+Two formats, from the same code, so they always agree with each other, and their
+numbers match the Excel workbook of the same run:
+
+| Extension | Use it when | Shape |
+|---|---|---|
+| `.jsonl` | The assistant can run code (pandas, a notebook, an analysis tool) | One JSON record per cell. Every record repeats its table, question, row and column labels, so **no joins** are needed. |
+| `.md` | You paste the file, or one table of it, into a chat | One Markdown table per question. Each cell packs the percentage, the count and the significance letters. |
+
+```sh
+mrscript export survey.mrst tables.jsonl
+mrscript export survey.mrst tables.md
+```
+
+In the desktop app: **Run ▸ Export for AI…** (Ctrl+Shift+A). Choose JSON Lines or
+Markdown in the save dialog.
+
+#### Worked example
+
+```mrs
+SOURCE "survey.sav"
+
+TABLE "Overall satisfaction by gender"
+    STUBS $q1
+    BANNER $gender
+    STATS n, col_pct
+END TABLE
+```
+
+**Markdown** (`tables.md`) — the table, as it would be pasted into a chat:
+
+```text
+## Table 1 · Overall satisfaction by gender
+
+Base: All respondents
+
+|  | Total | Gender › Male | Gender › Female |
+|:--|--:|--:|--:|
+| Base | 9 | 5 | 4 |
+| Strongly Disagree | 0% (0) | 0% (0) | 0% (0) |
+| Disagree | 11% (1) | 0% (0) | 25% (1) |
+| Neutral | 22% (2) | 20% (1) | 25% (1) |
+| Agree | 33% (3) | 40% (2) | 25% (1) |
+| Strongly Agree | 33% (3) | 40% (2) | 25% (1) |
+```
+
+A cell reads `percentage (count) letters`. With significance on, `58% (58) B` means
+58% of that column's base, 58 respondents, significantly higher than column B (the
+letters match the `(A)` / `(B)` in the headers). `<<` is a masked cell; an empty cell
+has no base. Members of a NET are indented with `–`, and the NET row itself is bold.
+
+**JSON Lines** (`tables.jsonl`) — the *Agree / Male / %* cell, shown over several
+lines for reading (in the file each record is one line):
+
+```json
+{
+  "record": "cell", "table": 1, "title": "Overall satisfaction by gender",
+  "base_description": "All respondents",
+  "section": 1, "question": "$q1", "question_label": "Overall Satisfaction",
+  "row": 5, "row_label": "Agree", "row_kind": "category", "row_level": 0, "row_parent": null,
+  "col": 1, "col_label": "Male", "col_var": "$gender", "col_group": ["Gender"], "col_letter": "",
+  "stat": "col_pct", "value": 40, "display": "40%",
+  "base_n": 5, "base_weighted": null, "masked": false,
+  "sig_higher_than": []
+}
+```
+
+Loading it takes one line, with nothing to join:
+
+```python
+import pandas as pd
+df = pd.read_json("tables.jsonl", lines=True)
+cells = df[df.record == "cell"]
+cells[(cells.row_label == "Agree") & (cells.stat == "col_pct")][["col_label", "value"]]
+```
+
+#### The JSON Lines file
+
+The first line is a `file` record that describes the format and every field, so an
+assistant can read the file with no other documentation. After it, each table is a
+`table` record followed by its `cell` records.
+
+| Record | Holds |
+|---|---|
+| `file` | `format` (`tablix-tables`), `schema_version`, the Tablix version, the number of tables, a plain-English `read_me`, and `fields` (what each cell key means). |
+| `table` | Title, base description, the requested `stats`, `weighted` / `stacked` / `grid` flags, every banner `column` (label, letter, variable, outer group, `is_total`), the `sections` (question variable and label), the `significance` settings (confidence level(s), comparison mode, letter scheme, tails, correction, design effect — or `null` when `sig` was not requested), `notes` (the significance legend and any caveat) and the `footer`. |
+| `cell` | One displayed number. `value` is the number as displayed; `display` is the text the deck shows. |
+
+Useful `cell` fields:
+
+- **`row_kind`** — `base`, `base_weighted`, `category`, `net`, `heading`, `value` (a
+  mean-type row), or `summary` (Mean / Std Dev / NPS …). `row_parent` names the NET or
+  heading a row belongs to, so a NET's members can be grouped without guessing from
+  indentation.
+- **`stat`** — `n`, `col_pct`, `row_pct`, `weighted_n` for counts and percentages;
+  `value` for value rows; the statistic's name (`mean`, `std_dev`, `nps` …) for
+  summary rows. A heading row has one record per column with `stat: null`.
+- **`value`** — `null` when the cell is blank or **masked**. A masked cell never
+  carries its number: `masked` is `true` and `display` is the mask (`<<`).
+- **`sig_higher_than`** — the columns this cell is significantly higher than:
+  `[{"col": 2, "label": "GroupB", "letter": "B", "confidence": 95}]`. It is carried once
+  per row, on the `col_pct` record (or on the row's first statistic when the table has
+  no `col_pct`). `confidence` is the
+  level that letter was tested at, so with two levels (`SIG_CONFIDENCE 99, 95`) an
+  uppercase letter reads 99 and a lowercase letter 95. A letter that cannot be matched
+  to exactly one column is `{"col": null, "label": null, …}` with a note on the table —
+  it is never guessed.
+
+#### What is applied, and what is not
+
+- **Applied, as in the text and HTML outputs:** decimals (`PCT_DECIMALS`, `COUNT_DECIMALS`,
+  `MEAN_DECIMALS`, `DECIMALS`, and a row's `DISPLAY DECIMALS`) with half-away-from-zero
+  rounding; `PCT_SIGN`; `THOUSANDS_SEPARATOR` (display text only); `MIN_BASE` and
+  `CONFIDENTIAL` masking; `BLANK_SUPPRESS`; `SUPPRESS`; `BASE_LABEL`; `PCT_ONLY` /
+  `COUNT_ONLY` / `CUMULATIVE` row properties; blank-versus-zero (a measured zero prints
+  `0`, a cell with no base is empty).
+- **Weighted tables:** `n` is the unweighted count (as in Excel); the weighted count is
+  the `weighted_n` stat and the `Base (wtd)` row. In the Markdown, the count in brackets
+  is unweighted, and the table says so.
+- **Labels are tidied:** surrounding whitespace is dropped and inner runs (tabs, line
+  breaks) become one space, so a label stored as `Very Poor`, a tab, then `[1]` reads
+  `Very Poor [1]`.
+- **Deterministic:** no timestamps, so exporting the same script twice gives
+  byte-identical files.
+- **Not included:** whether a question is single- or multi-response (percentages on a
+  multiple-response question can add to more than 100 — the file's `read_me` says so,
+  but does not mark which questions), and the numeric codes behind the labels.
+- **Size:** the JSON Lines file is large because every record repeats its context
+  (about 30 MB for a 134-table, 22-column deck) — it is meant for code, not for
+  pasting. The Markdown file for the same deck is about 0.4 MB (roughly 100,000
+  tokens); to give an assistant one table, copy the block under its `## Table N`
+  heading.
+- `--theme` and `--layout` do not apply.
+
 ### Command-line interface
 
 ```powershell
@@ -243,6 +388,8 @@ mrscript export script.mrs report.xlsx        # Execute; write styled Excel.
 mrscript export script.mrs report.html        # Execute; write HTML viewer.
 mrscript export script.mrs deck.pptx          # Execute; write a charted topline
                                               #   PowerPoint deck.
+mrscript export script.mrs tables.jsonl       # Execute; write AI-ready JSON Lines.
+mrscript export script.mrs tables.md          # Execute; write AI-ready Markdown.
 mrscript export script.mrs report.xlsx --theme blue --layout single_sheet
                                               #   --theme applies to .xlsx/.html/.pptx;
                                               #   --layout is .xlsx only.

@@ -146,6 +146,12 @@ RIM @rim_weight
 END RIM
 ```
 
+`WEIGHT_CAP` takes a single number and sets both limits: the ceiling is the
+value itself and the floor is its reciprocal, `1 / WEIGHT_CAP`. So `5.0` keeps
+weights in `[0.2, 5.0]`, `3.0` in `[0.333, 3.0]`, and `2.0` in `[0.5, 2.0]`.
+There is no separate lower-limit setting, which is also why the cap must be
+greater than 1.0.
+
 If any weight needs clamping, a warning is issued. A tight cap (e.g. 1.5) reduces
 weight dispersion but means the final margins won't exactly match targets — that
 trade-off is intentional.

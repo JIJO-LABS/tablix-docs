@@ -19,6 +19,7 @@ Script-wide execution settings. All clauses are optional.
 | `SIG_TAILS` | `1` \| `2` | One-tailed (directional) or two-tailed test. Default `2`. `1` uses the one-tailed critical value (more powerful for a directional hypothesis); the "higher than" lettering is preserved. Applies to **both** the proportion z-test and the mean t-test. |
 | `SIG_MEAN_TEST` | `exact_t` \| `normal` | Critical value for the column-**mean** test. Default `exact_t` — the exact Student-t at the Welch–Satterthwaite degrees of freedom (honest even at very small bases). `normal` keeps the older normal (z) approximation (slightly anticonservative for tiny bases). Proportions are always normal. |
 | `SIG_DEFF` | `<float ≥ 1.0>` | Design effect — a rough complex-sample (clustered) correction. Default `1.0` (no adjustment). The effective bases handed to the z/t tests are divided by DEFF before the statistic is formed, so the standard error inflates by √DEFF. A single global knob (not per-column). |
+| `SIG_PAIRED` | `true` \| `false` | Paired significance for **repeated measures**. Default `false` — every table is tested exactly as before. When `true`, two columns that hold the **same respondents** (a stacked `LEVEL` banner split by product, or the columns of a `TYPE GRID`) are compared with a paired test instead of as independent samples: McNemar's z for proportions, the paired t for means, and their partial-overlap forms when only some respondents are shared. Decided **per column pair**; pairs that share no respondent keep the independent test. Unweighted tables only in this version. `SUPPRESS_STACKED_SIG` / `SUPPRESS_GRID_SIG` still win. See [Worked example — repeated measures](#sig-paired). |
 | `MISSING_TREATMENT` | `exclude` \| `show` | Whether missing-coded respondents are excluded. Default `exclude`. |
 | `SUPPRESS_STACKED_SIG` | `true` \| `false` | When `true`, drops significance flags from stacked (`LEVEL`) tables, where repeated exposures are not independent. Default `false` (a non-fatal advisory is emitted when sig is kept on a `LEVEL` table). |
 | `SUPPRESS_GRID_SIG` | `true` \| `false` | When `true`, drops significance flags from `GRID` tables, whose columns are the same respondents (paired). Default `false` (sig runs; a non-fatal advisory notes the paired approximation). |
@@ -114,6 +115,81 @@ What each knob changes for the same data:
 The text-renderer legend names whichever strategy is active (e.g. *"One-tailed
 (directional) test."*, *"Benjamini–Hochberg FDR control applied (per comparison
 group)."*, *"Design effect DEFF = 1.5 applied (effective bases deflated)."*).
+
+<a id="sig-paired"></a>**Worked example — repeated measures (`SIG_PAIRED`)**
+
+In a sequential monadic test every respondent rates **both** products, so the Product A
+and Product B columns hold the *same people*. Tested as independent samples (the
+default) their letters are wrong in both directions: a preference grid is flagged about
+three times too often (the two "prefer" flags move against each other), and positively
+correlated ratings of the two products miss real differences. `SIG_PAIRED true` tests each
+pair of columns with the test that fits the respondents the two columns share:
+
+```mrs
+CONFIG
+  SIG_CONFIDENCE  95, 68
+  SIG_COMPARE     segment
+  SIG_PAIRED      true
+END CONFIG
+
+BANNER MAINB
+  @PROD BY @SEG_TOTAL, @PROD BY @SEG_USER, @PROD BY @SEG_1ST
+END BANNER
+
+TABLE "Overall liking" LEVEL @EXP
+  STUBS  @Q1_T
+  BANNER MAINB
+  STATS  n, col_pct, mean, sig
+END TABLE
+```
+
+| Column pair | Who is in both columns | Test used |
+|-------------|------------------------|-----------|
+| Product A vs B inside *All respondents*, *User*, *City* | every respondent tasted both products | proportions: **McNemar's z**; means: **paired t** (df = n − 1) |
+| the same pair when some answers are missing | most respondents, not all | proportions: **overlap-paired z**; means: **partially-overlapping t** |
+| Product A vs B inside *1st exposure only* | nobody (each respondent was first on one product only) | pooled z / Welch t, exactly as before |
+
+Rules:
+
+- **Pairing is decided per column pair**, from the respondents the two columns share. On a
+  stacked (`LEVEL`) table that is the same `%RESPID` on different rows; on a `TYPE GRID` it
+  is the same frame row. Respondent-level banner tables are not affected: a shared
+  respondent already carries the same answer into both columns there.
+- A column in which one respondent appears **twice** (a Total column, an unsplit product
+  column) cannot be paired. Its pairs stay on the independent test and keep the
+  "approximate" caveat.
+- `SIG_TAILS`, dual confidence levels, `SIG_DEFF` and `MIN_BASE` work as before
+  (`SIG_DEFF` deflates the shared-respondent counts together with the bases).
+  `SIG_CORRECTION` counts **every pair of columns in a comparison group** as one comparison,
+  whether it was tested paired or independent, and also a pair whose statistic is undefined
+  (both cells empty, say), which counts with p = 1.
+- **Unweighted tables only in this version.** Weighted tables, NPS and response-count rows,
+  `DISTRIBUTION` / `ADD` sections and a `GRID` on `BASE respondents` keep the independent
+  test, and a non-fatal advisory names them (`paired_sig_weighted_fallback`,
+  `paired_sig_unsupported_fallback`, `paired_sig_rows_fallback`).
+- `SIG_COMPARE prior` on panel waves is not paired yet.
+
+What changes: only letters. Numbers, bases and rows are identical with the knob on, and with
+it off every output is byte-identical to earlier versions. Expect preference grids to
+**lose** letters and stacked rating tables to **gain** them; both are corrections.
+
+What you see: every renderer replaces the "approximate" note **only where the paired test
+ran**, for example *"Paired test (McNemar z / paired t) used for 5 column pairs measured on
+the same respondents. 1 column pair shares no respondents and uses the independent test
+(independent z / Welch t), which is exact for it."* A table with pairs that could not be
+paired keeps the old caveat, scoped to those pairs. The AI-ready `.jsonl` table record gains
+`significance.paired` (see [output](output.md)) and `audit.json` records `sig_paired` when
+the knob is set.
+
+Cost: each comparison group tests all of its column pairs, and the paired test looks up the
+respondents each pair shares. A standard four-band deck runs about 1.2× slower with the knob
+on and a `GRID` with 30 breaks about 1.3×; a single comparison group of 60 columns about
+1.8× and of 240 columns about 4×. Nest the banner (`@A BY @B`) so that groups stay small,
+as the `wide_sig_clique` advisory already suggests. With the knob off there is no change.
+
+The tests are McNemar's z without continuity correction, generalised to partial overlap,
+and the partially-overlapping-samples t of Derrick, Russ, Toher & White (2017), which is the
+paired t when everyone is shared and Welch's t when no one is.
 
 ---
 

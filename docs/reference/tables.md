@@ -175,6 +175,12 @@ Significance compares the columns (the same respondents → paired), so the test
 approximate and a non-fatal advisory is emitted — drop the flags with
 `CONFIG SUPPRESS_GRID_SIG true`. A `GRID` has no Total column and no `BANNER`.
 
+With `CONFIG SIG_PAIRED true` the columns are compared with a **paired test** instead: McNemar's z on the
+`%` rows and a paired t on the Mean row, with respondents missing from one column entering through the
+partial-overlap forms. Pairing is by frame row, so with `ANSWERED_BASE false` every pair is fully paired.
+The "approximate" note and advisory go away where the paired test ran — see
+[setup-blocks §8](setup-blocks.md#sig-paired).
+
 ### Summary / top-box battery tables — `TYPE SUMMARY` {#summary}
 
 A `SUMMARY` table consolidates a **battery** of rating questions (`q1..qN` sharing a
@@ -440,6 +446,18 @@ of them is a distribution.
     default. Because both kinds of table usually live in the same report, put the clause
     on the tables that need it rather than in `FORMAT` — a report-wide default is wrong
     for one group or the other.
+
+### Significance on stacked tables {#stacked-sig}
+
+On a stacked (`LEVEL`) table each exposure is its own row, so a respondent who rated both
+products sits in both product columns. By default the letters treat those columns as
+independent samples and a non-fatal advisory (`stacked_sig_approximate`) says so; drop the
+flags with `CONFIG SUPPRESS_STACKED_SIG true`. With `CONFIG SIG_PAIRED true` each pair of
+columns is tested from the respondents it **actually shares**: a banner split by product
+inside a respondent-level segment (Total, usage, city) is fully paired, a first-exposure
+band shares nobody and stays independent. A column that holds the same respondent twice
+(a Total or an unsplit product column) cannot be paired. This applies to
+`TYPE SUMMARY … LEVEL` as well. See [setup-blocks §8](setup-blocks.md#sig-paired).
 
 ### Sorting rows — SORT {#sorting}
 

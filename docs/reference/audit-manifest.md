@@ -108,6 +108,7 @@ keys mean the engine default is in effect. Possible keys:
 | `sig_confidence` | `float[]` (e.g. `[95.0]` or `[99.0, 95.0]` for dual-CL) | `[95.0]` |
 | `sig_correction` | `"none"` / `"bonferroni"` | `"none"` |
 | `sig_compare` | `"segment"` / `"all"` / `"total"` / `"prior"` | `"segment"` |
+| `sig_paired` | `bool` (paired significance for repeated measures; recorded only when set) | `false` |
 | `output_format` | `"text"` / `"excel"` | `"text"` |
 | `missing_treatment` | `"exclude"` / `"show"` | `"exclude"` |
 | `default_stats` | `string[]` | *(the FORMAT STATS clause)* |

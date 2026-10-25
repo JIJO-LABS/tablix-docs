@@ -323,7 +323,7 @@ assistant can read the file with no other documentation. After it, each table is
 | Record | Holds |
 |---|---|
 | `file` | `format` (`tablix-tables`), `schema_version`, the Tablix version, the number of tables, a plain-English `read_me`, and `fields` (what each cell key means). |
-| `table` | Title, base description, the requested `stats`, `weighted` / `stacked` / `grid` flags, every banner `column` (label, letter, variable, outer group, `is_total`), the `sections` (question variable and label), the `significance` settings (confidence level(s), comparison mode, letter scheme, tails, correction, design effect — or `null` when `sig` was not requested), `notes` (the significance legend and any caveat) and the `footer`. |
+| `table` | Title, base description, the requested `stats`, `weighted` / `stacked` / `grid` flags, every banner `column` (label, letter, variable, outer group, `is_total`), the `sections` (question variable and label), the `significance` settings (confidence level(s), comparison mode, letter scheme, tails, correction, design effect, and a `paired` object when `SIG_PAIRED` is on — or `null` when `sig` was not requested), `notes` (the significance legend and any caveat) and the `footer`. |
 | `cell` | One displayed number. `value` is the number as displayed; `display` is the text the deck shows. |
 
 Useful `cell` fields:
@@ -345,6 +345,26 @@ Useful `cell` fields:
   uppercase letter reads 99 and a lowercase letter 95. A letter that cannot be matched
   to exactly one column is `{"col": null, "label": null, …}` with a note on the table —
   it is never guessed.
+
+**Paired significance.** With `CONFIG SIG_PAIRED true`, a table's `significance` object gains
+`paired`, so a reader (or an AI) knows which test produced the letters:
+
+```json
+"paired": {"tests": ["McNemar z", "paired t", "independent z", "Welch t"],
+           "pairs": {"paired": 5, "degenerate": 0, "same_rows": 0, "independent": 1,
+                     "not_pairable": 0, "weighted": 0, "other": 0, "unpaired_rows": 0}}
+```
+
+`pairs` counts **distinct column pairs per section**, never per row; every compared pair lands in
+exactly one of: `paired` (a paired statistic), `degenerate` (paired, but no verdict on any row:
+no differing responses), `same_rows` (a subgroup beside its total: the overlap test),
+`independent` (no respondent in common: exact), `not_pairable` (a column counts a respondent
+twice), `weighted` (v1 pairs are unweighted), `other` (a section the paired test does not cover).
+`unpaired_rows` additionally counts the pairs whose NPS or response-count rows kept the
+independent test. `tests` lists the tests used: `McNemar z`, `overlap-paired z`, `paired t`,
+`partially-overlapping t`, `independent z`, `Welch t`, `NPS z`. The key is **absent** when the knob
+is off, so a file produced without it is unchanged. The table's `notes` carry the same
+sentence the deck prints.
 
 #### What is applied, and what is not
 

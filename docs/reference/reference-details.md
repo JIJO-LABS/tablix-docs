@@ -25,9 +25,14 @@ A banner column below the table's `MIN_BASE` is excluded from testing. The lette
 render on their own row beneath each stub's count and percentage rows; multiple letters
 are separated (`B/C`).
 
+Columns that hold the **same respondents** (a stacked `LEVEL` banner split by product, a
+`TYPE GRID`) are tested as independent samples unless `CONFIG SIG_PAIRED true`, which uses a
+paired test for every column pair that shares respondents — McNemar's z for proportions,
+the paired t for means (see [setup-blocks §8](setup-blocks.md#sig-paired)).
+
 #### Significance strategy {#sig-strategy}
 
-Four `CONFIG` knobs tune *how* the test is run (all default to the status quo except
+Five `CONFIG` knobs tune *how* the test is run (all default to the status quo except
 `SIG_MEAN_TEST`, whose default is the more honest exact-t). Full table:
 [setup-blocks §8](setup-blocks.md#config).
 
@@ -37,6 +42,7 @@ Four `CONFIG` knobs tune *how* the test is run (all default to the status quo ex
 | `SIG_MEAN_TEST` | **`exact_t`** \| `normal` | The **Mean** row's critical value: the exact Student-t at the Welch–Satterthwaite degrees of freedom (`exact_t`, honest at small bases — e.g. df 2 needs `t = 4.30`, not `z = 1.96`), or the older normal approximation (`normal`). Proportions are always normal. |
 | `SIG_CORRECTION` | **`none`** \| `bonferroni` \| `bh` | Multiple-comparison correction over the m pairs in each comparison group. `none` = raw α; `bonferroni` = α/m (family-wise error rate); `bh` = Benjamini–Hochberg step-up (false-discovery rate — more powerful than Bonferroni when several differences are real). |
 | `SIG_DEFF` | **`1.0`** \| `≥ 1.0` | Design effect — divides the effective bases by DEFF before the statistic (SE inflates by √DEFF). A rough global correction for clustered/complex samples. |
+| `SIG_PAIRED` | **`false`** \| `true` | Paired tests for column pairs that share respondents (stacked `LEVEL` and `GRID` tables): McNemar's z / paired t, with partial-overlap forms; pairs that share nobody keep the independent test. Unweighted only. Respondent-level banner tables are unchanged. |
 
 **Multiple comparisons in plain terms.** When a table compares many column pairs, some
 will look "significant" by chance. `bonferroni` is strict — it guarantees a low chance

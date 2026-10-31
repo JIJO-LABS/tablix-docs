@@ -68,7 +68,7 @@ END CONFIG
 
 TABLE "Brand awareness by wave"
   STUBS  $brand
-  BANNER $wave            -- Q1 (A)  Q2 (B)  Q3 (C)  Q4 (D)
+  BANNER $wave            // Q1 (A)  Q2 (B)  Q3 (C)  Q4 (D)
   STATS  col_pct, n, sig
 END TABLE
 ```
@@ -106,15 +106,15 @@ mean test, and a design-effect correction:
 ```mrs
 CONFIG
   SIG_CONFIDENCE  95
-  SIG_TAILS       1          -- directional: only flag a column that is HIGHER
-  SIG_MEAN_TEST   exact_t    -- exact Student-t for Mean rows (the default)
-  SIG_CORRECTION  bh         -- Benjamini–Hochberg FDR across the column pairs
-  SIG_DEFF        1.5        -- clustered design: inflate the SE by √1.5
+  SIG_TAILS       1          // directional: only flag a column that is HIGHER
+  SIG_MEAN_TEST   exact_t    // exact Student-t for Mean rows (the default)
+  SIG_CORRECTION  bh         // Benjamini–Hochberg FDR across the column pairs
+  SIG_DEFF        1.5        // clustered design: inflate the SE by √1.5
 END CONFIG
 
 TABLE "Agreement by region"
   STUBS  $agree
-  BANNER $region        -- many columns → FDR (bh) keeps power without false positives
+  BANNER $region        // many columns → FDR (bh) keeps power without false positives
   STATS  col_pct, n, mean, sig
 END TABLE
 ```

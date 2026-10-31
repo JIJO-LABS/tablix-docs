@@ -54,10 +54,10 @@ hypotheses, many-column banners, small-base means, and clustered samples:
 ```mrs
 CONFIG
   SIG_CONFIDENCE  95
-  SIG_TAILS       1          -- one-tailed: only flag a column that is HIGHER
-  SIG_MEAN_TEST   exact_t    -- exact Student-t for Mean rows (the default)
-  SIG_CORRECTION  bh         -- Benjamini–Hochberg FDR (more power than bonferroni)
-  SIG_DEFF        1.5        -- clustered design: inflate the SE by √1.5
+  SIG_TAILS       1          // one-tailed: only flag a column that is HIGHER
+  SIG_MEAN_TEST   exact_t    // exact Student-t for Mean rows (the default)
+  SIG_CORRECTION  bh         // Benjamini–Hochberg FDR (more power than bonferroni)
+  SIG_DEFF        1.5        // clustered design: inflate the SE by √1.5
 END CONFIG
 
 TABLE 'Agreement by region'
@@ -296,12 +296,12 @@ up/down on the last?" read — instead of the full round-robin.
 ```mrs
 CONFIG
   SIG_CONFIDENCE 95
-  SIG_COMPARE    prior      -- each wave vs the wave before it
+  SIG_COMPARE    prior      // each wave vs the wave before it
 END CONFIG
 
 TABLE 'Awareness by wave'
   STUBS  $brand
-  BANNER $wave              -- Q1 (A)  Q2 (B)  Q3 (C)  Q4 (D)
+  BANNER $wave              // Q1 (A)  Q2 (B)  Q3 (C)  Q4 (D)
   STATS  col_pct, n, sig
 END TABLE
 ```
@@ -533,7 +533,7 @@ pre-derive nets — `MEASURE` builds the boxes from the scale.
 ```mrs
 TABLE 'Agreement battery — summary' TYPE SUMMARY
   STATEMENTS $s1, $s2, $s3
-  SCALE 1..5                       -- shared scale; or omit if the vars carry value labels
+  SCALE 1..5                       // shared scale; or omit if the vars carry value labels
   MEASURE TOP 2    'Top-2-Box'
   MEASURE BOTTOM 2 'Bottom-2-Box'
   MEASURE mean     'Mean'
@@ -555,10 +555,10 @@ the **best portfolio at each size** and reports its unduplicated **reach**, the
 
 ```mrs
 TABLE 'Flavour line — TURF' TYPE TURF
-  ITEMS  $flav_choc, $flav_van, $flav_straw, $flav_mint   -- 0/1 "would buy" flags
-  SIZE   1..3                                             -- the reach curve
+  ITEMS  $flav_choc, $flav_van, $flav_straw, $flav_mint   // 0/1 "would buy" flags
+  SIZE   1..3                                             // the reach curve
   REPORT reach, incremental, frequency
-  METHOD auto                                             -- exact for small sets, else greedy
+  METHOD auto                                             // exact for small sets, else greedy
 END TABLE
 ```
 
@@ -696,7 +696,7 @@ FORMAT
   BANNER $gender, $region
 END FORMAT
 
-AUTOTAB VARS()          -- every tabulatable variable, crossed by the FORMAT banner
+AUTOTAB VARS()          // every tabulatable variable, crossed by the FORMAT banner
 END AUTOTAB
 ```
 

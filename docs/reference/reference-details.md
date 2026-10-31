@@ -144,7 +144,7 @@ NPS = %promoters − %detractors          (passives stay in the base)
 
 ```mrs
 TABLE "Likelihood to recommend — NPS"
-    STUBS  $recommend                  -- the 0–10 question
+    STUBS  $recommend                  // the 0–10 question
     BANNER $gender
     STATS  col_pct, n, nps, sig
 END TABLE

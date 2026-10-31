@@ -151,7 +151,7 @@ The rules:
 ```mrs
 NET [ANY | ALL] 'label'
   (STUB ... | NET ... | HEADING ...)*
-ENDNET                                  -- or: END NET
+ENDNET                                  // or: END NET
 ```
 
 - `ANY` (default) — net = respondents matching at least one member (de-duplicated).
@@ -166,7 +166,7 @@ better next to the `END TABLE` / `END DERIVE` closers around it and stay consist
 ```mrs
 HEADING 'label'
   (STUB ... | NET ... | HEADING ...)*
-ENDHEADING                              -- or: END HEADING
+ENDHEADING                              // or: END HEADING
 ```
 
 A `HEADING` renders a label row with blank cells (no evaluator, no counts) — a section

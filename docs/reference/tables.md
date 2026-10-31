@@ -217,14 +217,14 @@ the usual banner columns (Total + optional demographics) and significance.
 
 ```mrs
 TABLE 'Brand agreement — summary' TYPE SUMMARY
-  STATEMENTS @easy, @value, @recommend   -- the battery (rows); share a 1-5 scale
-  SCALE 1..5                              -- shared scale endpoints (see resolution below)
-  MEASURE TOP 2     'Top-2-Box'           -- % choosing the top 2 scale points
+  STATEMENTS @easy, @value, @recommend   // the battery (rows); share a 1-5 scale
+  SCALE 1..5                              // shared scale endpoints (see resolution below)
+  MEASURE TOP 2     'Top-2-Box'           // % choosing the top 2 scale points
   MEASURE BOTTOM 2  'Bottom-2-Box'
-  MEASURE NET (3)   'Neutral'             -- an explicit code set
-  MEASURE mean      'Mean'                -- a score statistic
+  MEASURE NET (3)   'Neutral'             // an explicit code set
+  MEASURE mean      'Mean'                // a score statistic
   MEASURE median    'Median'
-  BANNER  $gender                         -- optional; a Total column is always shown
+  BANNER  $gender                         // optional; a Total column is always shown
   STATS   col_pct, n, sig
 END TABLE
 ```
@@ -267,8 +267,8 @@ A 13-statement battery listed in full makes for a long, error-prone line. Where 
 variable names end in consecutive numbers, `TO` expands the run, SPSS-style:
 
 ```mrs
-STATEMENTS @Q41_1 TO @Q41_13        -- exactly @Q41_1, @Q41_2, … @Q41_13
-STATEMENTS @s0, @s1 TO @s9, @s_other   -- singles and ranges may mix freely
+STATEMENTS @Q41_1 TO @Q41_13        // exactly @Q41_1, @Q41_2, … @Q41_13
+STATEMENTS @s0, @s1 TO @s9, @s_other   // singles and ranges may mix freely
 ```
 
 Expansion is on the **trailing number** only, so both ends must share the same prefix
@@ -318,10 +318,10 @@ parts), the **incremental reach** each added item brings, and the average
 
 ```mrs
 TABLE 'Flavour line — TURF' TYPE TURF
-  ITEMS  $flav_choc, $flav_van, $flav_straw, $flav_mint   -- the item set
-  SIZE   1..3                                             -- best portfolio at each size
-  REPORT reach, incremental, frequency                    -- which metric columns to show
-  METHOD auto                                             -- exact | greedy | auto (default auto)
+  ITEMS  $flav_choc, $flav_van, $flav_straw, $flav_mint   // the item set
+  SIZE   1..3                                             // best portfolio at each size
+  REPORT reach, incremental, frequency                    // which metric columns to show
+  METHOD auto                                             // exact | greedy | auto (default auto)
   FILTER $aware = 1
   WEIGHT $wgt
 END TABLE
@@ -709,10 +709,10 @@ FORMAT
 END FORMAT
 
 SCOPE WHERE $gender = 1 LABEL 'Males'
-  TABLE 'Q1 — Males' STUBS $q1 END TABLE                          -- Base: All qualified respondents
+  TABLE 'Q1 — Males' STUBS $q1 END TABLE                          // Base: All qualified respondents
   TABLE 'Brands — Males, opted in'
     STUBS @brands
-    BASE_DESCRIPTION 'Males who opted into brand tracking'        -- table wins over both
+    BASE_DESCRIPTION 'Males who opted into brand tracking'        // table wins over both
   END TABLE
 ENDSCOPE
 ```
@@ -869,7 +869,7 @@ FORMAT
     BANNER Demographics
 END FORMAT
 
-AUTOTAB VARS()          -- one crosstab per tabulatable codebook variable
+AUTOTAB VARS()          // one crosstab per tabulatable codebook variable
 END AUTOTAB
 ```
 
@@ -912,13 +912,13 @@ whole default universe if you give none — then `TYPE` and `LIKE` narrow it and
 `EXCLUDE` removes from it. An empty result is an error (loosen the filter).
 
 ```mrs
-AUTOTAB VARS($q1, $q5, $q10)                 -- just these three, in this order
+AUTOTAB VARS($q1, $q5, $q10)                 // just these three, in this order
     BANNER $gender
     STATS  col_pct, n
 END AUTOTAB
 
 AUTOTAB VARS(TYPE single_punch, LIKE "att_*", EXCLUDE $att_open)
-    BANNER Demographics                       -- AUTOTAB clauses override FORMAT
+    BANNER Demographics                       // AUTOTAB clauses override FORMAT
     SORT   col_pct DESC
     SHEET  "Attitudes"
 END AUTOTAB

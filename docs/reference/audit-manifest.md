@@ -109,6 +109,9 @@ keys mean the engine default is in effect. Possible keys:
 | `sig_correction` | `"none"` / `"bonferroni"` | `"none"` |
 | `sig_compare` | `"segment"` / `"all"` / `"total"` / `"prior"` | `"segment"` |
 | `sig_paired` | `bool` (paired significance for repeated measures; recorded only when set) | `false` |
+| `sig_letters` | `"global"` / `"per_segment"` (recorded only when set) | `"global"` |
+| `sig_tails` | `1` / `2` (recorded only when set) | `2` |
+| `sig_deff` | `float` ≥ 1.0, the design effect (recorded only when set) | `1.0` |
 | `sig_mean_test` | `"exact_t"` / `"normal"` / `"pooled_t"` (recorded only when set) | `"exact_t"` |
 | `sig_min_base` | `{n, effective, percent_only}` (the significance-only minimum base; recorded only when set) | *(none: `MIN_BASE` gates significance)* |
 | `sig_markers` | `"letters"` / `"plus_minus"` (recorded only when set) | `"letters"` |

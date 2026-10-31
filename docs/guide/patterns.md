@@ -315,6 +315,37 @@ See [SIG_COMPARE](../reference/setup-blocks.md#config).
 
 ---
 
+## Moving an MRDCL tracker: column-vs-rest testing, `+` / `-`
+
+MRDCL (and Quantum) test every banner column against **everyone else** and print `+` / `-`.
+`SIG_COMPARE total` does the same test, and four options match the rest of MRDCL's setting
+`f=SHG0/SIG1/SLA95/MCT30`:
+
+```mrs
+CONFIG
+  SIG_CONFIDENCE    95
+  SIG_COMPARE       total                       // column vs the rest of the sample
+  SIG_MEAN_TEST     pooled_t                    // MRDCL's mean test
+  SIG_MIN_BASE      30 EFFECTIVE PERCENT_ONLY   // MCT30: effective base, % rows only
+  SIG_MARKERS       plus_minus                  // + / - instead of column letters
+  WEIGHTED_STD_DEV  sum_weights                 // MRDCL's Std Dev / Std Error
+END CONFIG
+
+FORMAT
+  WEIGHT  $wgt
+  BANNER  Banner
+  STATS   n, col_pct, mean, std_dev, std_error, sig
+END FORMAT
+```
+
+Do not add `MIN_BASE` to the `FORMAT`: once `SIG_MIN_BASE` is set it alone decides who is tested
+(`MIN_BASE` still masks small cells in the display if you want that too). Compare a first table
+with the MRDCL output before converting the rest; the bases, counts, percentages, means,
+standard deviations and markers should agree. See the full option list and a worked example in
+[setup-blocks](../reference/setup-blocks.md#sig-vs-rest).
+
+---
+
 ## Add profiling variables by JOIN
 
 Match a profile file onto your main file by respondent key.

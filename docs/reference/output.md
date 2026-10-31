@@ -323,7 +323,7 @@ assistant can read the file with no other documentation. After it, each table is
 | Record | Holds |
 |---|---|
 | `file` | `format` (`tablix-tables`), `schema_version`, the Tablix version, the number of tables, a plain-English `read_me`, and `fields` (what each cell key means). |
-| `table` | Title, base description, the requested `stats`, `weighted` / `stacked` / `grid` flags, every banner `column` (label, letter, variable, outer group, `is_total`), the `sections` (question variable and label), the `significance` settings (confidence level(s), comparison mode, letter scheme, tails, correction, design effect, and a `paired` object when `SIG_PAIRED` is on — or `null` when `sig` was not requested), `notes` (the significance legend and any caveat) and the `footer`. |
+| `table` | Title, base description, the requested `stats`, `weighted` / `stacked` / `grid` flags, every banner `column` (label, letter, variable, outer group, `is_total`), the `sections` (question variable and label), the `significance` settings (confidence level(s), comparison mode, letter scheme, tails, correction, design effect, and, only when they apply, a `paired` object (`SIG_PAIRED`), `markers` (`SIG_MARKERS plus_minus`), `min_base` (`SIG_MIN_BASE`) and `vs_total_columns` — or `null` when `sig` was not requested), `notes` (the significance legend and any caveat) and the `footer`. |
 | `cell` | One displayed number. `value` is the number as displayed; `display` is the text the deck shows. |
 
 Useful `cell` fields:
@@ -345,6 +345,18 @@ Useful `cell` fields:
   uppercase letter reads 99 and a lowercase letter 95. A letter that cannot be matched
   to exactly one column is `{"col": null, "label": null, …}` with a note on the table —
   it is never guessed.
+
+**Column-vs-rest markers.** With `SIG_COMPARE total` every column is tested against the rest of the
+sample. With `CONFIG SIG_MARKERS plus_minus` the `significance` object gains `"markers": "plus_minus"`, every
+column's `letter` is `""`, and a cell names no column: a significantly higher cell lists
+`{"col": null, "label": "the rest of the sample", "letter": "+", "confidence": 95}` in `sig_higher_than`,
+and a significantly lower cell lists the same with `"-"` in `sig_lower_than` (a key that exists only in these
+files; the file's `read_me` and `fields` say so). `significance` also gains `min_base`
+(`{"n": 30, "basis": "effective" | "unweighted", "percent_rows_only": true}`) when `SIG_MIN_BASE` is set, and
+`vs_total_columns` (labels) when some columns of a `total` table kept the older column-vs-Total test (see
+[setup-blocks §8](setup-blocks.md#config)). A weighted table's record gains `"weighted_std_dev": "sum_weights"`
+when `WEIGHTED_STD_DEV sum_weights` is set: how its Std Dev and Std Error were derived, which the table itself
+does not print. Each key appears only when it applies, so a file that uses none of these is unchanged.
 
 **Paired significance.** With `CONFIG SIG_PAIRED true`, a table's `significance` object gains
 `paired`, so a reader (or an AI) knows which test produced the letters:

@@ -109,6 +109,10 @@ keys mean the engine default is in effect. Possible keys:
 | `sig_correction` | `"none"` / `"bonferroni"` | `"none"` |
 | `sig_compare` | `"segment"` / `"all"` / `"total"` / `"prior"` | `"segment"` |
 | `sig_paired` | `bool` (paired significance for repeated measures; recorded only when set) | `false` |
+| `sig_mean_test` | `"exact_t"` / `"normal"` / `"pooled_t"` (recorded only when set) | `"exact_t"` |
+| `sig_min_base` | `{n, effective, percent_only}` (the significance-only minimum base; recorded only when set) | *(none: `MIN_BASE` gates significance)* |
+| `sig_markers` | `"letters"` / `"plus_minus"` (recorded only when set) | `"letters"` |
+| `weighted_std_dev` | `"effective"` / `"sum_weights"` (the Std Dev / Std Error variance; recorded only when set) | `"effective"` |
 | `output_format` | `"text"` / `"excel"` | `"text"` |
 | `missing_treatment` | `"exclude"` / `"show"` | `"exclude"` |
 | `default_stats` | `string[]` | *(the FORMAT STATS clause)* |

@@ -17,9 +17,12 @@ Script-wide execution settings. All clauses are optional.
 | `SIG_CORRECTION` | `none` \| `bonferroni` \| `bh` | Multiple-comparison correction across the column pairs in a comparison group. Default `none` (each pair tested at the raw level, matching Quantum/MRDCL/SPSS). `bonferroni` divides alpha by the number of testable pairs (controls the *family-wise* error rate). `bh` is the **Benjamini–Hochberg** false-discovery-rate step-up (controls the expected share of false positives among the *flagged* pairs — more powerful than Bonferroni when several true differences exist). |
 | `SIG_COMPARE` | `segment` \| `all` \| `total` \| `prior` | Which columns are compared. Default `segment`. |
 | `SIG_TAILS` | `1` \| `2` | One-tailed (directional) or two-tailed test. Default `2`. `1` uses the one-tailed critical value (more powerful for a directional hypothesis); the "higher than" lettering is preserved. Applies to **both** the proportion z-test and the mean t-test. |
-| `SIG_MEAN_TEST` | `exact_t` \| `normal` | Critical value for the column-**mean** test. Default `exact_t` — the exact Student-t at the Welch–Satterthwaite degrees of freedom (honest even at very small bases). `normal` keeps the older normal (z) approximation (slightly anticonservative for tiny bases). Proportions are always normal. |
+| `SIG_MEAN_TEST` | `exact_t` \| `normal` \| `pooled_t` | The column-**mean** test. Default `exact_t` — the exact Student-t at the Welch–Satterthwaite degrees of freedom (honest even at very small bases). `normal` keeps the older normal (z) approximation (slightly anticonservative for tiny bases). `pooled_t` is the classic **pooled-variance Student t** (df = n₁ + n₂ − 2, the test MRDCL uses); it works with every `SIG_COMPARE` mode. Proportions are always normal. |
 | `SIG_DEFF` | `<float ≥ 1.0>` | Design effect — a rough complex-sample (clustered) correction. Default `1.0` (no adjustment). The effective bases handed to the z/t tests are divided by DEFF before the statistic is formed, so the standard error inflates by √DEFF. A single global knob (not per-column). |
 | `SIG_PAIRED` | `true` \| `false` | Paired significance for **repeated measures**. Default `false` — every table is tested exactly as before. When `true`, two columns that hold the **same respondents** (a stacked `LEVEL` banner split by product, or the columns of a `TYPE GRID`) are compared with a paired test instead of as independent samples: McNemar's z for proportions, the paired t for means, and their partial-overlap forms when only some respondents are shared. Decided **per column pair**; pairs that share no respondent keep the independent test. Unweighted tables only in this version. `SUPPRESS_STACKED_SIG` / `SUPPRESS_GRID_SIG` still win. See [Worked example — repeated measures](#sig-paired). |
+| `SIG_MIN_BASE` | `<n> [EFFECTIVE] [PERCENT_ONLY]` | A minimum base for **significance only** (the table-level `MIN_BASE` also masks the display, so it keeps its meaning). A column below `<n>` is not tested. By default `<n>` is compared with the **unweighted** base; `EFFECTIVE` compares the Kish effective base instead (an unweighted table's effective base is its n); `PERCENT_ONLY` applies the cut to percentage rows only, so Mean, Mean Responses and NPS rows are tested at any base where the statistic exists. Under `SIG_COMPARE total` both the column **and the rest of the sample** must pass. When `SIG_MIN_BASE` is set, `MIN_BASE` no longer gates significance (it still masks the display); when it is not, `MIN_BASE` gates percentage, mean and NPS rows on the unweighted base, as before. The table legend says *"Not tested where the column's or the rest of the sample's [effective] base is under N"*. |
+| `SIG_MARKERS` | `letters` \| `plus_minus` | How `SIG_COMPARE total` results are shown. Default `letters`. `plus_minus` prints **`+`** (significantly higher than the rest of the sample) or **`-`** (significantly lower) in the cell and drops the column letters from the headers, the layout MRDCL and Quantum print. It needs `SIG_COMPARE total` and a single `SIG_CONFIDENCE` level (a validation error otherwise), and applies to percentage, Mean, Mean Responses and NPS rows in every output. A table it cannot apply to (a `TYPE GRID`, or one without a Total column) keeps its letters. |
+| `WEIGHTED_STD_DEV` | `effective` \| `sum_weights` | The variance behind the **Std Dev** and **Std Error** rows of a *weighted* table. Display only: no significance test ever uses it. `effective` (default): Σw(x−m)² ÷ (Σw − Σw²/Σw). `sum_weights`: Σw(x−m)² ÷ (Σw − 1), the SPSS frequency-weight convention and the one MRDCL prints. Std Error is the std dev ÷ √(Kish effective base) under both. Unweighted tables are unaffected. The table does not say which is used; the audit manifest and the JSONL export record it. |
 | `MISSING_TREATMENT` | `exclude` \| `show` | Whether missing-coded respondents are excluded. Default `exclude`. |
 | `SUPPRESS_STACKED_SIG` | `true` \| `false` | When `true`, drops significance flags from stacked (`LEVEL`) tables, where repeated exposures are not independent. Default `false` (a non-fatal advisory is emitted when sig is kept on a `LEVEL` table). |
 | `SUPPRESS_GRID_SIG` | `true` \| `false` | When `true`, drops significance flags from `GRID` tables, whose columns are the same respondents (paired). Default `false` (sig runs; a non-fatal advisory notes the paired approximation). |
@@ -30,8 +33,24 @@ Script-wide execution settings. All clauses are optional.
 
 - `segment` — within each innermost banner group only.
 - `all` — round-robin across all non-Total columns (cross-segment).
-- `total` — each non-Total column against the Total column (Total is lettered and
-  participates; needs a Total column shown).
+- `total` — each non-Total column against **the rest of the sample** (the Total minus
+  that column). The rest is disjoint from the column, so the two are independent samples
+  and the test is exact: a pooled two-proportion z (pooled on the Total's own proportion)
+  for percentages, using the rest's own effective base when the table is weighted. (Before
+  0.9.0 `total` compared the column with the Total, which counts the column twice; on
+  weighted data that approximation drifted from the exact test.) The Total is lettered and
+  participates: a column significantly **higher than the rest** carries the Total's letter,
+  and a column significantly **lower than the rest** puts its own letter in the Total cell
+  (`SIG_MARKERS plus_minus` shows these as `+` and `-`). Mean, Mean Responses and NPS rows
+  are tested too. `MIN_BASE` and `SIG_MIN_BASE` check the column **and** the rest. Needs a
+  Total column shown.
+
+  On a `BASE respondents` table the column and its rest must add up to the Total. That holds
+  when every row has its own respondent id (the usual respondent-level table) and, where ids
+  repeat (stacked `LEVEL` tables, long-format data), for every banner column whose
+  respondents lie wholly inside or wholly outside it. Any other column keeps the older
+  overlap-adjusted column-vs-Total test, which is approximate: a non-fatal advisory
+  (`sig_total_rest_unavailable`) names the table and the legend names the columns.
 - `prior` — **wave-on-wave**: each column against the one immediately to its left
   (its *prior* column), within each innermost banner segment. The two columns are
   treated as **independent samples** (correct for a fresh-sample tracker;
@@ -115,6 +134,52 @@ What each knob changes for the same data:
 The text-renderer legend names whichever strategy is active (e.g. *"One-tailed
 (directional) test."*, *"Benjamini–Hochberg FDR control applied (per comparison
 group)."*, *"Design effect DEFF = 1.5 applied (effective bases deflated)."*).
+
+<a id="sig-vs-rest"></a>**Worked example — MRDCL / Quantum-style column-vs-rest testing**
+
+MRDCL's significance setting `f=SHG0/SIG1/SLA95/MCT30` tests every banner column against the
+rest of the sample, prints `+` and `-`, uses a pooled-variance t for means, applies the
+minimum base of 30 to the effective base for percentages only, and prints a standard
+deviation that divides by Σw − 1. `SIG_COMPARE total` with four options reproduces it:
+
+```mrs
+CONFIG
+  SIG_CONFIDENCE    95
+  SIG_COMPARE       total          // each column vs the rest of the sample
+  SIG_MEAN_TEST     pooled_t       // pooled-variance Student t, df = n1 + n2 - 2
+  SIG_MIN_BASE      30 EFFECTIVE PERCENT_ONLY   // % rows; column and rest need 30 effective
+  SIG_MARKERS       plus_minus     // + / - in the cells, no letters in the headers
+  WEIGHTED_STD_DEV  sum_weights    // Std Dev / Std Error divide by sum of weights - 1
+END CONFIG
+
+TABLE "Overall liking"
+  STUBS  $liking
+  BANNER $gender, $age_band
+  WEIGHT $wgt
+  STATS  n, col_pct, mean, std_dev, std_error, sig
+END TABLE
+```
+
+Leave `MIN_BASE` out of this setup: with `SIG_MIN_BASE` set, `SIG_MIN_BASE` alone decides who
+is tested. What each option changes:
+
+- **`SIG_COMPARE total`** tests a column against everyone else instead of against a Total
+  that contains it, so a column that is a weighting cell (a quota or SEC band, whose weights
+  differ from the rest's) is no longer over- or under-flagged.
+- **`SIG_MEAN_TEST pooled_t`** pools the two variances. With very unequal bases or variances
+  it gives a different verdict from the default Welch test, and it is the one MRDCL prints.
+- **`SIG_MIN_BASE 30 EFFECTIVE PERCENT_ONLY`** withholds a percentage verdict when the
+  column's or the rest's *effective* base is under 30, and still tests the Mean and NPS rows
+  of a small column.
+- **`SIG_MARKERS plus_minus`** shows the verdict as `+` or `-` in every output (text, HTML,
+  Excel, CSV, PowerPoint, JSONL, Markdown). The legend reads *"+ / -: significantly higher /
+  lower than the rest of the sample (Total minus the column), 95% confidence."*
+- **`WEIGHTED_STD_DEV sum_weights`** changes only the Std Dev and Std Error rows.
+
+Run against an MRDCL run of a weighted 20-table tracker with 73 banner columns, this setup
+reproduced every base, count, percentage, mean, standard deviation, standard error and all
+10,944 `+` / `-` markers of each of two samples. Scripts that do not set these options are
+unchanged, except that a `SIG_COMPARE total` script now gets the exact column-vs-rest test.
 
 <a id="sig-paired"></a>**Worked example — repeated measures (`SIG_PAIRED`)**
 

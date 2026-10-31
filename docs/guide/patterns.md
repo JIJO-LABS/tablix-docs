@@ -583,6 +583,75 @@ END TABLE
 
 See [ADD](../reference/tables.md#row-axis).
 
+## Price-sensitivity curves (Van Westendorp)
+
+Four questions (too cheap, cheap, expensive, too expensive) asked in the same price units, tabulated
+as the four running curves: "too cheap" and "cheap" read *this price or higher*, "expensive" and
+"too expensive" read *this price or lower*. `ROWS FROM` gives all four tables the same price list,
+built from the data, and `CUMULATIVE` does the running total inside the table, so Excel, CSV and
+PowerPoint show it as well as the text output.
+
+```mrs
+SOURCE 'price_test.sav'
+%RESPID = $rid
+
+TABLE 'Too cheap - this price or higher'
+  DISTRIBUTION $too_cheap CUMULATIVE REVERSE ROWS FROM $too_cheap, $cheap, $expensive, $too_expensive
+  BANNER $segment
+  STATS  n, col_pct
+END TABLE
+
+TABLE 'Cheap - this price or higher'
+  DISTRIBUTION $cheap CUMULATIVE REVERSE ROWS FROM $too_cheap, $cheap, $expensive, $too_expensive
+  BANNER $segment
+  STATS  n, col_pct
+END TABLE
+
+TABLE 'Expensive - this price or lower'
+  DISTRIBUTION $expensive CUMULATIVE ROWS FROM $too_cheap, $cheap, $expensive, $too_expensive
+  BANNER $segment
+  STATS  n, col_pct
+END TABLE
+
+TABLE 'Too expensive - this price or lower'
+  DISTRIBUTION $too_expensive CUMULATIVE ROWS FROM $too_cheap, $cheap, $expensive, $too_expensive
+  BANNER $segment
+  STATS  n, col_pct
+END TABLE
+```
+
+Each table's base is the respondents who answered that question. A price nobody gave for a question
+is still a row, so the four curves line up.
+
+To keep **everyone who was asked** in the base, write the curve as a `DERIVE` with one stub per price
+and a hidden catch-all for the people who skipped. On an "or higher" curve the catch-all is marked
+`CUMULATIVE REVERSE` too, so a respondent who skipped counts at every price; on an "or lower" curve it
+is left unmarked, so they count at none.
+
+```mrs
+DERIVE @cheap_ge LABEL 'Cheap - this price or higher'
+  STUB 1 '6'  CUMULATIVE REVERSE WHERE $cheap = 6
+  STUB 2 '8'  CUMULATIVE REVERSE WHERE $cheap = 8
+  STUB 3 '10' CUMULATIVE REVERSE WHERE $cheap = 10
+  STUB 4 '12' CUMULATIVE REVERSE WHERE $cheap = 12
+  STUB 5 '14' CUMULATIVE REVERSE WHERE $cheap = 14
+  STUB 99 'Not asked' SUPPRESS CUMULATIVE REVERSE WHERE $cheap MISSING
+END DERIVE
+
+TABLE 'Cheap - this price or higher (all respondents)'
+  STUBS  @cheap_ge
+  BANNER $segment
+  STATS  n, col_pct
+END TABLE
+```
+
+Two things to know. Do not `SORT` these tables: a sorted curve no longer reads as a running total.
+And a PowerPoint chart draws at most 12 categories, so on a long price list the highest prices are
+left off the chart (the Excel and CSV tables are complete).
+
+See [DISTRIBUTION](../reference/tables.md#row-axis) and
+[Running totals](../reference/data-preparation.md#cumulative-rows).
+
 ## Tab the whole survey (AUTOTAB)
 
 Generate one banner table per codebook variable, instead of hand-writing a `TABLE`

@@ -37,7 +37,7 @@
         "VALUE", "MISSING", "STATS_EXCLUDE", "SCORE", "POSITIONS", "INTO",
         "ELSE", "SET",
         "KEEP", "DROP", "ROWS", "EMPTY", "SHOW_TOTAL", "STATS_ONLY",
-        "ANSWERED_BASE", "BREAKS", "DISPLAY", "SUPPRESS", "CUMULATIVE", "DECIMALS",
+        "ANSWERED_BASE", "BREAKS", "DISPLAY", "SUPPRESS", "CUMULATIVE", "REVERSE", "DECIMALS",
         "KEEP_IF_ZERO", "GRID", "DEFINE", "CALL",
         // summary / top-box battery tables
         "SUMMARY", "STATEMENTS", "MEASURE", "TOP", "BOTTOM", "SCALE",

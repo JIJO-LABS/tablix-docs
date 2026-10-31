@@ -90,9 +90,61 @@ Placed between the code/props and `WHERE`:
 | `DISPLAY count_only` | Show label + n only (suppress the % line). |
 | `DISPLAY row_pct` | Show row % for this row instead of column %. |
 | `SUPPRESS` | Hide this row (still tabulated; feeds nets above it). |
-| `CUMULATIVE` | Show a running cumulative % down the rows. |
+| `CUMULATIVE` | Running total, top-down: this row counts its own respondents **and those of the earlier rows marked `CUMULATIVE`** (count, %, row %, weighted count and significance letters all follow). See [Running totals](#cumulative-rows). |
+| `CUMULATIVE REVERSE` | The same, bottom-up: this row plus the **later** rows marked `CUMULATIVE REVERSE`. |
 | `DECIMALS n` | Decimal places for this row's counts/% (overrides the table/global `DECIMALS`; default 0). |
 | `KEEP_IF_ZERO` | Keep this row when `BLANK_SUPPRESS row` is on and n = 0. |
+
+#### Running totals — `CUMULATIVE` {#cumulative-rows}
+
+"At this price or lower", "this age or older": mark each row of the curve and the table counts a
+running total. The engine builds it, so the count, the column %, the row %, the weighted count and the
+significance letters of a marked row all describe *this row and the earlier marked rows*, and every
+output (Excel, CSV, PowerPoint, text, HTML, Markdown, JSONL) shows the same numbers.
+
+```mrs
+DERIVE @p_le LABEL 'Price - this price or lower'
+  STUB 1 '6'  CUMULATIVE WHERE $p = 6
+  STUB 2 '8'  CUMULATIVE WHERE $p = 8
+  STUB 3 '10' CUMULATIVE WHERE $p = 10
+  STUB 4 '12' CUMULATIVE WHERE $p = 12
+  STUB 99 'Not asked' SUPPRESS WHERE $p MISSING      // in the base, never on the curve
+END DERIVE
+
+DERIVE @p_ge LABEL 'Price - this price or higher'
+  STUB 1 '6'  CUMULATIVE REVERSE WHERE $p = 6
+  STUB 2 '8'  CUMULATIVE REVERSE WHERE $p = 8
+  STUB 3 '10' CUMULATIVE REVERSE WHERE $p = 10
+  STUB 4 '12' CUMULATIVE REVERSE WHERE $p = 12
+  STUB 99 'Not asked' SUPPRESS CUMULATIVE REVERSE WHERE $p MISSING   // counts at every price
+END DERIVE
+```
+
+Ten respondents with `$p` = 6, 6, 8, 8, 8, 10, 10, 12 and two blanks give a base of 10. `@p_le` reads
+2 (20%), 5 (50%), 7 (70%), 8 (80%); `@p_ge` reads 10 (100%), 8 (80%), 5 (50%), 3 (30%).
+
+The rules:
+
+- **A respondent counts once.** The running row is the *union* of the rows' respondents, not a sum
+  of percentages, so on a multi-response question the curve stops at 100%.
+- **Chains run among sibling rows:** the same indent level under the same parent row. A `HEADING`
+  ends the chain at its level. A row without the keyword (a NET, a flat TOP 2 BOX row, a catch-all)
+  shows its own value and neither joins nor breaks a chain.
+- **A marked `SUPPRESS` row is hidden, not removed**, so it still joins. That is how respondents who
+  skipped a price question can count at every price on an "or higher" curve.
+- **Forward and reverse are separate chains.** A row is one or the other; if a stub carries both, the
+  last one wins.
+- **Mean, Std Dev, Median and `responses` rows use the rows' own values**, never the running ones.
+- **In a nest (`X BY Y`) put `CUMULATIVE` on the inner variable.** The running total then restarts
+  under each outer row. On the outer variable the header rows run but their members keep their own
+  values, which is not supported.
+- **Do not `SORT` a curve.** Sorting moves the rows after they are counted, so the table no longer
+  reads as a running total; the run prints the non-fatal advisory `cumulative_sorted`.
+- Banner columns and `GRID`, `SUMMARY`, `TURF` and `ADD` sections ignore the property.
+
+`DISTRIBUTION` takes the same property and can build the price list for you: see
+[DISTRIBUTION](tables.md#row-axis) and the recipe
+[Price-sensitivity curves](../guide/patterns.md#price-sensitivity-curves-van-westendorp).
 
 ### 11c. NET blocks — summary rows
 

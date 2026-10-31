@@ -372,8 +372,11 @@ sentence the deck prints.
   `MEAN_DECIMALS`, `DECIMALS`, and a row's `DISPLAY DECIMALS`) with half-away-from-zero
   rounding; `PCT_SIGN`; `THOUSANDS_SEPARATOR` (display text only); `MIN_BASE` and
   `CONFIDENTIAL` masking; `BLANK_SUPPRESS`; `SUPPRESS`; `BASE_LABEL`; `PCT_ONLY` /
-  `COUNT_ONLY` / `CUMULATIVE` row properties; blank-versus-zero (a measured zero prints
+  `COUNT_ONLY` row properties; blank-versus-zero (a measured zero prints
   `0`, a cell with no base is empty).
+- **Running rows (`CUMULATIVE`):** the table engine builds the running count, % and letters, so the
+  cells already hold them and the view shows them as they are. Excel, CSV and PowerPoint show the
+  same numbers.
 - **Weighted tables:** `n` is the unweighted count (as in Excel); the weighted count is
   the `weighted_n` stat and the `Base (wtd)` row. In the Markdown, the count in brackets
   is unweighted, and the table says so.

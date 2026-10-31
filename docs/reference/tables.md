@@ -55,6 +55,32 @@ Requesting a summary stat appends those rows computed over the raw values.
 DISTRIBUTION $age STATS n, col_pct, mean, std_dev
 ```
 
+**Running totals and shared rows.**
+
+```mrs
+DISTRIBUTION var [CUMULATIVE [REVERSE]] [, var [CUMULATIVE [REVERSE]] ...] [ROWS FROM var [, var ...]]
+```
+
+`CUMULATIVE` makes every row a running total from the top (its own respondents plus those of the
+rows above); `CUMULATIVE REVERSE` runs from the bottom. The base is still the respondents who
+answered *this* variable, and the summary rows (mean, std dev, ...) stay on the raw values.
+See [Running totals](data-preparation.md#cumulative-rows) for the rules.
+
+`ROWS FROM` gives every variable in the clause the rows of the listed variables: the sorted union
+of the values present, with nulls and declared `MISSING` codes dropped per variable. A value this
+variable never has is a row with n = 0 (on a running row it carries the chain). A row's label comes
+from the first listed variable that defines one. It also works without `CUMULATIVE`.
+
+```mrs
+// four questions, one price list; "or higher" from the bottom, "or lower" from the top
+DISTRIBUTION $too_cheap CUMULATIVE REVERSE ROWS FROM $too_cheap, $cheap, $expensive, $too_expensive
+DISTRIBUTION $expensive CUMULATIVE         ROWS FROM $too_cheap, $cheap, $expensive, $too_expensive
+```
+
+The base of a `DISTRIBUTION` is the respondents who answered. For a base of everyone who was asked,
+write the curve as a `DERIVE` with a hidden catch-all row; the recipe
+[Price-sensitivity curves](../guide/patterns.md#price-sensitivity-curves-van-westendorp) shows both.
+
 `STUBS` and `DISTRIBUTION` may both appear and compose in source order.
 
 !!! tip "Sentinel codes in a numeric-entry column"

@@ -58,7 +58,7 @@ DISTRIBUTION $age STATS n, col_pct, mean, std_dev
 **Running totals and shared rows.**
 
 ```mrs
-DISTRIBUTION var [CUMULATIVE [REVERSE]] [, var [CUMULATIVE [REVERSE]] ...] [ROWS FROM var [, var ...]]
+DISTRIBUTION var [CUMULATIVE [REVERSE]] [DESC] [, var [CUMULATIVE [REVERSE]] [DESC] ...] [ROWS FROM var [, var ...]]
 ```
 
 `CUMULATIVE` makes every row a running total from the top (its own respondents plus those of the
@@ -70,6 +70,15 @@ See [Running totals](data-preparation.md#cumulative-rows) for the rules.
 of the values present, with nulls and declared `MISSING` codes dropped per variable. A value this
 variable never has is a row with n = 0 (on a running row it carries the chain). A row's label comes
 from the first listed variable that defines one. It also works without `CUMULATIVE`.
+
+`DESC` lists the values from the highest down (10, 9, ... 1). Without it the rows run from the
+lowest up. It is the order MRDCL's `di` tables print, so use it to match a delivered table. It
+is per variable, and a running total follows the order shown: `CUMULATIVE DESC` adds the rows
+above it, which now means the higher values. The summary rows (mean, std dev, ...) do not change.
+
+```mrs
+DISTRIBUTION $household_size DESC STATS n, col_pct, mean     // 10 ... 1, then Mean
+```
 
 ```mrs
 // four questions, one price list; "or higher" from the bottom, "or lower" from the top

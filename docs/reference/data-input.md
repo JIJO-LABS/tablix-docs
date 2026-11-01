@@ -259,6 +259,30 @@ Concatenates the rows of the named datasets, unioning columns (a column missing 
 one file is null-filled there). Variable metadata is merged; the first file's
 definition wins on shared columns.
 
+**Files read by different loaders stack cleanly.** The same number is not stored the same way by
+every format: a fixed-width (`ascii`) file reads whole-number codes as integers, an SPSS file reads
+them as decimals, and a column that is empty in one file has no type at all. `APPEND` treats those
+as the same data:
+
+| Same-named column in the sources | Result |
+|---|---|
+| integers and decimals | one decimal column (integers only stay integers) |
+| a column that is empty in one source | takes the other source's type |
+| unlabelled column that looks 0/1 (or empty) in one source and numeric in another | one `numeric` variable |
+| numbers in one source, text in another | **error** naming the column and both sources; numbers are never turned into text |
+| a labelled (`single_punch`) column against a plain number column | **error** naming both types, as before |
+
+```mrs
+// history stored as a fixed-width file, the new wave as an SPSS export
+SOURCE hist 'waves_1_to_5.asc' AS ascii SCHEMA 'layout.json'
+SOURCE new  'wave6.sav'
+APPEND hist, new
+TABLE 'Spend by wave' DISTRIBUTION $amount BANNER $wave END TABLE
+```
+
+If an unlabelled column is blank for every respondent in one of the files, leave it out of that
+file's layout: it then comes from the other file only.
+
 Each source may include optional `LABEL "text"` (display label, defaults to the source's
 name) and `CODE n` (integer tag, defaults to sequential numbering starting at 1).
 When the `APPEND` ends with `AS @var`, it produces a ready-to-use `single_punch` categorical

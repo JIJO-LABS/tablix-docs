@@ -432,15 +432,17 @@ mrscript export script.mrs report.csv --data data.sav
 
 mrscript export-data script.mrs clean.sav     # Write the transformed data out.
                                               #   [--data F] [--source-only]
-                                              #   [--codebook book.json]
+                                              #   [--codebook book.json] [--set N=V]
 
 mrscript project run project.yml              # Batch-run a YAML project of scripts;
                                               #   output format per-entry by extension.
+                                              #   [--set N=V] beats every entry's set:.
 
 mrscript build script.mrst                    # Transpile a .mrst authoring file to
-                                              #   its sibling .mrs only (--map for a
-                                              #   source map). run / export also
-                                              #   accept .mrst and transpile first.
+                                              #   its .tablix/*.mrs only (--map for a
+                                              #   source map; --set N=V pins a #set).
+                                              #   run / export also accept .mrst and
+                                              #   transpile first.
 
 mrscript health script.mrs                    # Run data health / QC checks; print a
                                               #   grouped text summary to stdout.
@@ -454,3 +456,33 @@ mrscript export script.mrs report.csv \       #   output. See §17: Audit Manife
     --out-store DIR/                          #   full out-store spec (audit.json schema,
                                               #   git context, SHA-256 checksums).
 ```
+
+#### Project files {#project-files}
+
+`mrscript project run project.yml` builds every deliverable of a job in one go. Each
+`scripts:` entry is one output file; the same script can appear more than once with
+different `set:` values:
+
+```yaml
+project: "Anunciar wave 6"
+data: "data/W1_6.parquet"        # optional; an entry's own data: wins
+set:                              # script values for every entry (optional)
+  WAVE: 6
+scripts:
+  - script: "TABLES.mrst"         # a .mrs or a .mrst (transpiled first, like mrscript run)
+    output: "output/RANDOM.xlsx"
+    layout: single_sheet          # .xlsx only: multi_sheet (default) | single_sheet
+    theme: classic                # .xlsx only: classic (default) | blue | teal | minimal
+    set: {RB: 1}                  # this entry's #set / SET values; they win over the top-level set:
+  - script: "TABLES.mrst"
+    output: "output/BOOSTER.xlsx"
+    layout: single_sheet
+    set: {RB: 0}
+```
+
+Paths are relative to the project file; a relative `SOURCE` in a script resolves
+beside that script, as it does for `mrscript run`. `--set NAME=VALUE` on the command
+line beats both `set:` maps. A name in an entry's own `set:` that its script never uses
+(no `#set`, `SET` or `{NAME}`) fails that entry, so a typo cannot deliver the default variant;
+the top-level `set:` is for every script, so some may not use a name. An entry that fails is
+reported and the batch carries on.

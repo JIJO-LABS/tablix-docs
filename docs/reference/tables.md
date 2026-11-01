@@ -207,6 +207,35 @@ partial-overlap forms. Pairing is by frame row, so with `ANSWERED_BASE false` ev
 The "approximate" note and advisory go away where the paired test ran — see
 [setup-blocks §8](setup-blocks.md#sig-paired).
 
+### Row blocks per break — `BREAKS` {#breaks}
+
+`BREAKS` runs a table **once per break** and merges the runs into **one** table: each
+break becomes a labelled block (the block's heading is the break's label) with **its own
+base** and its **own column-vs-column significance**. It works on a `TYPE GRID` and on an
+ordinary `STUBS` / `DISTRIBUTION` table; `TYPE SUMMARY` and `TYPE TURF` do not take it.
+
+```mrs
+DERIVE @item LABEL "Item"
+    STUB 1 "Electricity" WHERE @item_no = 1
+    STUB 2 "Education"   WHERE @item_no = 2
+END DERIVE
+
+TABLE "Mean monthly amount by payment frequency"
+    DISTRIBUTION @amount        // a numeric answer ...
+    STATS_ONLY                  // ... shown as its summary rows only
+    BANNER @frequency           // Monthly / Quarterly / Yearly columns
+    BREAKS @item                // one block per item, each on its own base
+    STATS mean
+END TABLE
+```
+
+A break's block is exactly the same table written with that break's condition as its
+`FILTER`; the table's own `FILTER` applies inside every break. `BREAKS` takes a named
+banner (`BREAKS Regions`) or inline variables (`BREAKS @brk_a, @brk_b`); each must be
+categorical. A table with several stub variables heads each block
+`<break> — <variable>`. Cell provenance (`mrscript provenance`) does not drill into a
+`BREAKS` table. This is the form of MRDCL's appended `+t#` row blocks.
+
 ### Summary / top-box battery tables — `TYPE SUMMARY` {#summary}
 
 A `SUMMARY` table consolidates a **battery** of rating questions (`q1..qN` sharing a
@@ -237,6 +266,13 @@ END TABLE
 | `MEASURE NET (a, b, …) ['Label']` | An **explicit** code set — any box, not just the ends (e.g. `NET (3)` = the neutral midpoint). |
 | `MEASURE <stat> ['Label']` | A **score statistic** row — `mean`, `median`, `std_dev`, `std_error`, `sum`, `mode`. Uses the variable's `SCORE` (or code-as-score when none is declared). |
 | `SCALE lo..hi` | The shared scale endpoints used by `TOP`/`BOTTOM`. Optional — see resolution. |
+
+**No heading row.** An explicit empty label (`MEASURE NET (3) ""`) drops the measure's
+heading row: its statement rows print flat, at the top level, with nothing above them. It
+is the layout of an item-per-row summary (a battery shown as one row per item, each on its
+own base). Leaving the label off (`MEASURE NET (3)`) keeps the derived heading, "NET (3)".
+Several measures need their headings to tell the rows apart, so an empty label is only
+allowed when the table has a single `MEASURE`.
 
 **Box rows** (`TOP`/`BOTTOM`/`NET`) show a percentage (and count, if `n` is in
 `STATS`) over **each statement's own valid base**, so item-nonresponse on one

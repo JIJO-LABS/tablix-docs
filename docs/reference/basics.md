@@ -130,6 +130,23 @@ a different value for one particular run:
 mrscript run script.mrs --set brand=Careem --set city=2   # repeatable
 ```
 
+`--set` is on `run`, `export`, `export-data`, `build` and `project run`, and it
+reaches both layers: a `SET` line in a `.mrs`, and a `#set` line in a `.mrst` (the
+authoring layer, [§ 4c](#4c-authoring-layer-mrst)). The `#set` line stays as the default; the override
+replaces its value wherever the script (or an `#include` of it) sets that name, read
+like a `#set` right-hand side, so `--set SEG=a,b` makes a list a `#for` can walk. One
+script then serves every variant of a deliverable (sample, banner, mode), with no
+wrapper files:
+
+```bash
+mrscript export Tables.mrst Random.xlsx --layout single_sheet --set RB=1
+mrscript export Tables.mrst Booster.xlsx --layout single_sheet --set RB=0
+```
+
+A name the script never uses (no `#set`, no `SET`, no `{name}` token) changes nothing,
+so Tablix prints `warning: --set NAME: …` rather than quietly running the default
+variant. Without `--set`, a `.mrst` runs exactly as before.
+
 In the desktop app, the **Sweep** panel (sidebar) runs one script once per row
 of a parameter table, each row overriding a different set of `SET` values (and
 optionally a different data file per row) — "run this script with N different

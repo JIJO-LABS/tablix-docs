@@ -168,6 +168,10 @@ is tested. What each option changes:
   differ from the rest's) is no longer over- or under-flagged.
 - **`SIG_MEAN_TEST pooled_t`** pools the two variances. With very unequal bases or variances
   it gives a different verdict from the default Welch test, and it is the one MRDCL prints.
+- **The minimum is inclusive and forgives rounding.** A column whose effective base is
+  exactly the minimum is tested: 30 equal weights give a Kish base of 29.999999999999993 in
+  floating point, and Tablix compares with a relative slack of 1e-9 so that column is not
+  dropped (MRDCL tests it). A base a real fraction below the minimum is still not tested.
 - **`SIG_MIN_BASE 30 EFFECTIVE PERCENT_ONLY`** withholds a percentage verdict when the
   column's or the rest's *effective* base is under 30, and still tests the Mean and NPS rows
   of a small column.

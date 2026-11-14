@@ -6,10 +6,10 @@
 
 | Stat | Meaning |
 |------|---------|
-| `n` | Unweighted count in the cell. |
-| `col_pct` | Column %: cell n as % of the column base. |
-| `row_pct` | Row %: cell n as % of the row total. |
-| `weighted_n` | Sum of weights (requires `WEIGHT`; adds weighted `col_pct`). |
+| `n` | The count in the cell: respondents on an unweighted table, the **weighted count** when a `WEIGHT` is on (the count the Output screen shows, and every other format). |
+| `col_pct` | Column %: the cell's count as % of the column base (weighted under a weight). |
+| `row_pct` | Row %: the cell's count as % of the row total. |
+| `weighted_n` | Sum of weights (requires `WEIGHT`). On a weighted table it is the same line as `n`: asking for both prints one count line. |
 | `sig` | Significance flags (see below). |
 
 **`sig`** — distribution rows use a pooled two-proportion **Z-test** (overlap-adjusted
@@ -285,13 +285,16 @@ base_n[col] = count( banner_col_mask AND valid_mask )
 `valid_mask` = is-not-null **AND** not in a declared `MISSING` code. System missing
 (`.`) is always excluded.
 
-**Weighted base** — when `WEIGHT` is active, three base rows appear:
+**Weighted base** — when `WEIGHT` is active, three base rows appear, in this order and with these
+labels in every output format ([the same numbers in every format](output.md#same-numbers)):
 
-| Row | Meaning |
-|-----|---------|
-| `n` | Unweighted count |
-| `weighted_n` | Sum of weights |
-| `effective_n` | Kish effective base: (Σw)² / Σ(w²) |
+| Row | Label | Meaning |
+|-----|-------|---------|
+| `weighted_n` | Base (wtd) | Sum of weights (`BASE_LABEL` renames this first row) |
+| `n` | Base (unwtd) | Unweighted count: the respondents |
+| `effective_n` | Effective base | Kish effective base: (Σw)² / Σ(w²) |
+
+Without a weight there is one row, **Base**.
 
 **Respondent base** — `BASE respondents` counts unique respondents (by `%RESPID`)
 instead of rows. On a non-stacked table it de-duplicates rows. On a stacked (`LEVEL`)

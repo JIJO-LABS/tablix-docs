@@ -103,6 +103,7 @@ nav:
       - getting-started/what-is-tablix.md
       - getting-started/installation.md
   - Tutorial:
+      - tutorial/build-tables.md
       - tutorial/first-crosstab.md
       - tutorial/health-check.md
       - tutorial/wave-merging.md
@@ -130,3 +131,4 @@ nav:
       - 16 · Table-Run Diff: reference/table-diff.md
       - 17 · Audit Manifest: reference/audit-manifest.md
       - 18 · Open-End Coding: reference/coding.md
+      - 19 · Script Builder: reference/script-builder.md

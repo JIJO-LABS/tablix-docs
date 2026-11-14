@@ -124,6 +124,12 @@ This is the page you keep open while you script. If you are new, work through th
     (analyst-fills) or AI-assisted via the same provider harness as `assist`. Output
     round-trips via `CODEBOOK` so the themes tabulate like any `multi_binary` set.
 
+-   **[19 · Script Builder](script-builder.md)**
+
+    The **Build** mode and `mrscript generate` — open a data file, tick the questions to
+    tabulate, and Tablix writes, checks and runs the script. The `.tbjob` job file, how
+    questions and rating scales are found, what is written for each type, and the checks.
+
 </div>
 
 ---

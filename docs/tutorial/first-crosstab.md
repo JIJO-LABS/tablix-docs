@@ -368,6 +368,9 @@ ENDSCOPE
 
 <div class="grid cards" markdown>
 
+-   :material-cursor-default-click-outline: **[Build tables without writing script](build-tables.md)** —
+    open your data, tick the questions, and let Tablix write the script for you.
+
 -   :material-stethoscope: **[Pre-flight health check](health-check.md)** —
     check your data before tabulating: duplicate IDs, rogue codes, straightliners,
     and `EXPECT` routing assertions.

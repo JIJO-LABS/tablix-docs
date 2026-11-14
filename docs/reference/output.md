@@ -52,6 +52,34 @@ command selects format by output-file extension (`.csv` is the default; `.xlsx`
 triggers Excel; `.html` triggers the HTML viewer; `.pptx` triggers the PowerPoint
 deck; `.jsonl` / `.md` write the AI-ready tables).
 
+### The same numbers in every format {#same-numbers}
+
+Every format shows **exactly the numbers the Output screen (the plain-text output) shows**: Excel,
+CSV, the HTML viewer, JSON Lines, Markdown and PowerPoint. Only the layout differs. A test
+compares every base, count, percentage and value of every format with the screen on a wide set of
+tables, unweighted and weighted.
+
+The **base block** of a section, in every format:
+
+| Table | Rows, in this order |
+|-------|--------------------|
+| Unweighted | **Base**: the number of respondents |
+| Weighted (`WEIGHT`) | **Base (wtd)**: the sum of the weights, then **Base (unwtd)**: the respondents, then **Effective base** |
+
+`BASE_LABEL "text"` renames the first of these rows (**Base** or **Base (wtd)**) in every format.
+
+**Under a weight, a count is the weighted count.** A count row (`STATS n` or `STATS weighted_n`; on a
+weighted table the two are the same line) holds the weighted count in every format, so a count and its
+percentage always agree (144 of a weighted base of 304 is 47%). The respondent number is the
+**Base (unwtd)** row. A percentage is always the engine's own figure: for a `TYPE SUMMARY` statement it
+is over that statement's own base.
+
+Other rules the formats share: `SUPPRESS` and `BLANK_SUPPRESS` rows and columns are left out; a row
+marked `DISPLAY pct_only` / `count_only` shows only that kind of number; a column with no base is blank;
+`MIN_BASE` / `CONFIDENTIAL` cells show the mask. The CSV keeps its numbers unrounded (the macro that reads it
+owns the decimals), and the PowerPoint charts the values the table shows (`n=` in a slide's header and
+series names is the respondent base).
+
 ### Plain text (`mrscript run`)
 
 Quantum/MRDCL-style fixed-width tables, written to stdout.
@@ -65,7 +93,7 @@ Base: <text>                    from the enclosing SCOPE LABEL; else "All respon
                   --------------   ---------------       one per banner segment,
            Total    Male  Female    6-8 YO  9-10 YO     each underlined; columns
                                                         in different segments are
-Total         105      52      53      73       32      gap-separated
+Base          105      52      53      73       32      gap-separated
               ----   ----- -------   ------ --------
   <stub>       52      52       0      36       16    ← count line
               50%    100%      0%     49%      50%    ← percentage line
@@ -111,13 +139,20 @@ sentinel column.
     | `STUB` | A distribution row (count / pct / sig repeated per stat) |
     | `NET` | A NET row (aggregate of stubs; bold in formatters) |
     | `HEADING` | A display-only heading row (blank data cells) |
-    | `BASE` | The base (n) row for the section |
+    | `BASE` | A base row of the section: one row (`stat` `n`), or on a weighted table `weighted_n` (Base (wtd)), `n` (Base (unwtd)) and `effective_n` (Effective base) — see [the same numbers in every format](#same-numbers) |
     | `STAT_MEAN` / `STAT_STD_DEV` / `STAT_STD_ERROR` / `STAT_SUM` / `STAT_MEDIAN` / `STAT_MODE` / `STAT_QUARTILE` | Summary rows |
     | `SIG_LEGEND` | Significance legend (one row per legend line, per table) |
     | `FOOTER` | Table footer; one row per newline in the FOOTER clause |
 
 All tables are written into one CSV file surrounded by `FILE_START` / `FILE_END`
 sentinels. Encoding is UTF-8 with BOM (`utf-8-sig`) for Excel compatibility.
+
+The CSV holds the screen's quantity but not its rounding: values are written unrounded (six
+significant digits), and the macro that reads the file sets the decimals. On a weighted table the
+count row's `stat` is `weighted_n` (there is no `n` count row; the respondent number is the `BASE`
+row with `stat` `n`). Rows and columns the screen hides (`SUPPRESS`, `BLANK_SUPPRESS`, the line a
+`pct_only` / `count_only` row hides) are not written; a column with no base is empty, and a
+`MIN_BASE` / `CONFIDENTIAL` cell holds the mask.
 
 ### Interactive HTML viewer (`mrscript export … .html`) {#html}
 
@@ -168,6 +203,12 @@ hyperlinks to each table), followed by either:
   otherwise exactly duplicate the Percentage sheet's sig rows; the
   Percentage copy keeps sig in full. A table on the Count sheet only (no
   pct stats requested) keeps its own sig.
+
+The workbook shows the screen's numbers ([the same numbers in every format](#same-numbers)): under a
+weight the Count sheet holds **weighted counts** and the base block is *Base (wtd)*, *Base (unwtd)*,
+*Effective base*; `BASE_LABEL` renames the first base row; a `DISPLAY pct_only` / `count_only` row
+leaves the other kind blank (single-sheet keeps the row so the two sheets line up) or out
+(multi-sheet).
 
 | Theme | Look |
 |-------|------|
@@ -235,12 +276,12 @@ for people. The AI-ready export follows one rule: **the AI sees exactly what you
 see — nothing more, nothing less.** Every number is rounded the way the deck rounds
 it, every cell hidden by `MIN_BASE` / `CONFIDENTIAL` stays hidden, every row hidden
 by `SUPPRESS` or `BLANK_SUPPRESS` stays out, and every significance letter is
-translated into the name of the column it points to. (This is also why it is not
-the tagged CSV: that format carries unrounded values and no masks, because an Excel
-macro does the presentation.)
+translated into the name of the column it points to. (The tagged CSV holds the same
+quantities, but unrounded, because an Excel macro does the presentation.)
 
 Two formats, from the same code, so they always agree with each other, and their
-numbers match the Excel workbook of the same run:
+numbers match the Output screen and the Excel workbook of the same run
+([the same numbers in every format](#same-numbers)):
 
 | Extension | Use it when | Shape |
 |---|---|---|
@@ -252,7 +293,7 @@ mrscript export survey.mrst tables.jsonl
 mrscript export survey.mrst tables.md
 ```
 
-In the desktop app: **Run ▸ Export for AI…** (Ctrl+Shift+A). Choose JSON Lines or
+In the desktop app: **Export ▸ Export for AI…** (Ctrl+Shift+A). Choose JSON Lines or
 Markdown in the save dialog.
 
 #### Worked example
@@ -328,13 +369,18 @@ assistant can read the file with no other documentation. After it, each table is
 
 Useful `cell` fields:
 
-- **`row_kind`** — `base`, `base_weighted`, `category`, `net`, `heading`, `value` (a
-  mean-type row), or `summary` (Mean / Std Dev / NPS …). `row_parent` names the NET or
-  heading a row belongs to, so a NET's members can be grouped without guessing from
-  indentation.
-- **`stat`** — `n`, `col_pct`, `row_pct`, `weighted_n` for counts and percentages;
-  `value` for value rows; the statistic's name (`mean`, `std_dev`, `nps` …) for
-  summary rows. A heading row has one record per column with `stat: null`.
+- **`row_kind`** — `base` (respondents), `base_weighted` (sum of weights), `base_effective`
+  (Kish effective base), `category`, `net`, `heading`, `value` (a mean-type row), or
+  `summary` (Mean / Std Dev / NPS …). `row_parent` names the NET or heading a row belongs
+  to, so a NET's members can be grouped without guessing from indentation.
+- **`stat`** — `n` (respondents; unweighted tables), `weighted_n` (the count on a weighted
+  table, and the sum of weights on `base_weighted`), `effective_n` (`base_effective`),
+  `col_pct`, `row_pct`; `value` for value rows; the statistic's name (`mean`, `std_dev`,
+  `nps` …) for summary rows. A heading row has one record per column with `stat: null`.
+  **`schema_version` 2:** on a weighted table a count cell has `stat: "weighted_n"` and there
+  is no respondent count per cell (the respondent number is the `base` row and the cell's
+  `base_n`). A program written for version 1 that reads `stat == "n"` finds no count cells in a
+  weighted file.
 - **`value`** — `null` when the cell is blank or **masked**. A masked cell never
   carries its number: `masked` is `true` and `display` is the mask (`<<`).
 - **`sig_higher_than`** — the columns this cell is significantly higher than:
@@ -389,9 +435,9 @@ sentence the deck prints.
 - **Running rows (`CUMULATIVE`):** the table engine builds the running count, % and letters, so the
   cells already hold them and the view shows them as they are. Excel, CSV and PowerPoint show the
   same numbers.
-- **Weighted tables:** `n` is the unweighted count (as in Excel); the weighted count is
-  the `weighted_n` stat and the `Base (wtd)` row. In the Markdown, the count in brackets
-  is unweighted, and the table says so.
+- **Weighted tables:** the count is the weighted count, as on the screen (JSON Lines stat
+  `weighted_n`; in the Markdown, the count in brackets). The base block is *Base (wtd)*, *Base
+  (unwtd)* (respondents) and *Effective base*, and the table says it is weighted.
 - **Labels are tidied:** surrounding whitespace is dropped and inner runs (tabs, line
   breaks) become one space, so a label stored as `Very Poor`, a tab, then `[1]` reads
   `Very Poor [1]`.

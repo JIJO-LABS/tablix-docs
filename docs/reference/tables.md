@@ -474,6 +474,34 @@ TABLE 'T7. Oral-care concerns by age'
 END TABLE
 ```
 
+#### Showing every row and column on one table — `BLANK_SUPPRESS none` {#blank-suppress-none}
+
+`BLANK_SUPPRESS row`, `col` or `both` set in the global `FORMAT` block hides empty rows and
+columns on **every** table. A table value wins over the global one, and `none` (also written
+`off`) is the value that means "hide nothing". Use it on the few tables that must always print
+their full layout, even when a group happens to be empty:
+
+```mrs
+FORMAT
+  BLANK_SUPPRESS col              // every table hides banner columns nobody is in
+END FORMAT
+
+TABLE 'Q12. Liking, every concept'
+  STUBS  $q12
+  BANNER @concept
+END TABLE                         // hides the empty columns, as set above
+
+TABLE 'Penalty analysis, Panel 1'
+  STUBS  @liking
+  BANNER @penalty_groups
+  BLANK_SUPPRESS none             // shows all its columns and rows, even an empty group
+END TABLE
+```
+
+`none` changes nothing else: a table with no data at all is still dropped when
+`SUPPRESS_EMPTY true` is set, and a row marked `SUPPRESS` stays hidden. A table-level `row`,
+`col` or `both` still beats a global `none`.
+
 ### Choosing the base on a stacked table — `BASE respondents` {#stacked-base}
 
 On a stacked (`LEVEL`) table the unit of analysis is an **evaluation** — a respondent ×

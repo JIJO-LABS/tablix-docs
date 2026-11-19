@@ -286,7 +286,7 @@ the table level ([§17](tables.md)). One `FORMAT` block per script.
 | `THOUSANDS_SEPARATOR true\|false` | Comma-group large counts (e.g. `1,234`). |
 | `MIN_BASE n [MASK 'text']` | Mask whole banner columns with base `< n` (mask: `<<`). |
 | `CONFIDENTIAL n [MASK 'text']` | Mask individual cells with count `< n` (mask: `**`). |
-| `BLANK_SUPPRESS row\|col\|both` | Hide all-zero rows / zero-base columns within a table. |
+| `BLANK_SUPPRESS row\|col\|both\|none` | Hide all-zero rows / zero-base columns within a table. `none` (also written `off`) hides nothing: put it on a **table** to switch a global `row` / `col` / `both` off for that table ([example](tables.md#blank-suppress-none)). |
 | `SUPPRESS_EMPTY true\|false` | Drop the **whole** table when it has no data — every column base is 0 in every section. Surviving tables renumber contiguously. Default `false`. |
 | `AUTONUMBER true\|false` | Number leaf stub rows (`1. 2. 3. …`). |
 | `RANKING ascending\|descending` | Sort stub rows by the **Total** column value — shorthand for `SORT col_pct ASC\|DESC ON TOTAL`. |

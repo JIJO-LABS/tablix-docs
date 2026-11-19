@@ -204,6 +204,17 @@ hyperlinks to each table), followed by either:
   Percentage copy keeps sig in full. A table on the Count sheet only (no
   pct stats requested) keeps its own sig.
 
+The `single_sheet` Index has the columns *No.*, *Title*, *Base*, *N*, *Counts* and *Percentages*.
+**`N` is the unweighted number of respondents the table's Total column shows** for the first question,
+and it stays that number when the Total column is hidden (`SHOW_TOTAL false`): it is then the base the
+Total column *would* have shown (everyone who answered the first question), not the base of the first
+banner column. Example: a concept test where each household sees one of four concepts and the banner is
+the four concepts with no Total, 600 households, 150 per concept. A table of everyone now reads
+**N = 600** (it used to read 150, the first concept's base). A question asked of one concept only reads
+the 150 households that were asked it (it used to read 0 whenever the first concept was not the one asked). `GRID` and `BREAKS` tables, and the `ADDTAB`,
+`BANKED_TABLE` and `MANIP` outputs, have no single such number and keep showing their first column's
+base. The `multi_sheet` Index has no `N` column.
+
 The workbook shows the screen's numbers ([the same numbers in every format](#same-numbers)): under a
 weight the Count sheet holds **weighted counts** and the base block is *Base (wtd)*, *Base (unwtd)*,
 *Effective base*; `BASE_LABEL` renames the first base row; a `DISPLAY pct_only` / `count_only` row

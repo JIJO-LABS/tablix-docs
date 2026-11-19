@@ -64,10 +64,26 @@ layer — see [Authoring-layer comments](#authoring-layer-comments) in §4c belo
 | `@name` | **Derived** variable — created in the script by `DERIVE`, `STACK`, `COMPUTE`, or a `RECODE`/`EDIT … INTO @new` clause | `@ageband`, `@concerns`, `@trial`, `@bmi` |
 | `%NAME` | **Reserved** constant. Currently only `%RESPID` exists (see [§6](data-input.md#respid)) | `%RESPID` |
 
-Names are **case-sensitive**. `$` and `@` are mandatory prefixes — they distinguish
-source from derived variables and let both share the same stem (e.g. `$brand` and
-`@brand` are different variables). The engine strips the prefix to get the underlying
-column name (`$gender` → column `gender`).
+Names are **case-sensitive**. `$` and `@` are mandatory prefixes — they say where a
+variable comes from (the data file, or the script). The engine strips the prefix to get
+the underlying column name (`$gender` → column `gender`).
+
+!!! warning "One name, one meaning"
+    `$brand` and `@brand` are the **same column** inside Tablix, so a script cannot use
+    both. A name is either a data column or a script variable, never both. If the data
+    already has a column `brand`, a statement that creates `@brand` (`DERIVE`, `SPREAD`,
+    `COMBINE`, `COMPUTE`, `RIM`, `STACK`, or `EDIT` / `RECODE … INTO`) stops the script
+    before any table runs:
+
+    ```text
+    COMPUTE target '@brand' shadows source variable '$brand': one name cannot be both a
+    data column and a script variable. Rename the @ variable. (line 12)
+    ```
+
+    Rename the script variable (`@brand_net`). To change the data column itself, edit it
+    in place with `EDIT $brand SET …` (no `INTO`). The rule also covers a column the
+    script adds itself with `MERGE` or `AGGREGATE`. Names are case-sensitive, so `@Brand`
+    next to `$brand` is allowed.
 
 **Naming rules**
 

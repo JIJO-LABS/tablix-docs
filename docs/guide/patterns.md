@@ -502,7 +502,7 @@ Several rating statements side-by-side as columns, each showing its own
 distribution + NETs + mean.
 
 ```mrs
-DERIVE @s1
+DERIVE @s1_scale
   NET 'Top 2 Box'    STUB 5 'Strongly agree' WHERE $s1 = 5
                      STUB 4 'Agree'          WHERE $s1 = 4   ENDNET
   STUB 3 'Neutral'   WHERE $s1 = 3
@@ -510,12 +510,12 @@ DERIVE @s1
                      STUB 1 'Strongly disagree' WHERE $s1 = 1  ENDNET
   SCORE 1=1 SCORE 2=2 SCORE 3=3 SCORE 4=4 SCORE 5=5
 END DERIVE
-// ... @s2, @s3 defined the same way ...
+// ... @s2_scale, @s3_scale defined the same way ...
 
 TABLE 'Agreement battery' TYPE GRID
-  COLUMN @s1 LABEL 'Statement 1'
-  COLUMN @s2 LABEL 'Statement 2'
-  COLUMN @s3 LABEL 'Statement 3'
+  COLUMN @s1_scale LABEL 'Statement 1'
+  COLUMN @s2_scale LABEL 'Statement 2'
+  COLUMN @s3_scale LABEL 'Statement 3'
   STATS col_pct, mean
 END TABLE
 ```

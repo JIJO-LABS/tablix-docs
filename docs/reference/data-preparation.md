@@ -42,6 +42,10 @@ header band (and its underline) entirely rather than drawing a blank one. This i
 distinct from a `STUB`'s own label below, which names that stub's row, not the
 variable.
 
+The `@name` must be new: it cannot be the name of a data column (`DERIVE @age` when the
+data has `$age` is an error, see [Variable naming](basics.md#3-variable-naming-conventions)).
+The same applies to `SPREAD`, `COMBINE`, `STACK`, `COMPUTE`, `RIM` and `INTO @new`.
+
 ### 11a. STUB (row definition)
 
 ```mrs
@@ -335,6 +339,11 @@ END TABLE
 is one exposure (product / concept / wave / diary occasion). Tabulate against it with
 `LEVEL @name` in a `TABLE` ([§17](tables.md)). There are two forms depending on the
 data structure.
+
+Every `@` name a `STACK` creates must be free of a data column of the same name: the
+stack name (it becomes the level column), each `MAP` target and, in a multi-axis
+`STACK`, the generated `@<axis>_n` and `@<stack>_slot`
+(see [Variable naming](basics.md#3-variable-naming-conventions)).
 
 ### 12a. Single-axis STACK — uniform rotation
 
@@ -635,7 +644,8 @@ EDIT $var SET value WHERE condition [INTO @new]
 
 Sets a column's value to `value` for the rows matching the condition. **In place** by
 default (the source column's values change); `INTO @new` writes a new derived column
-and leaves the source untouched.
+and leaves the source untouched. The `@new` name must not be the name of a data column
+(`EDIT $age … INTO @age` is an error; leave `INTO` out to change `$age` itself).
 
 ```mrs
 EDIT $age SET 999 WHERE $age > 120              // flag impossible ages
@@ -660,7 +670,8 @@ RECODE $var (sources -> dest ['label']) ... [ELSE n ['label']] [INTO @new]
 
 Remaps sets of old codes to new ones **simultaneously** (every branch tests the
 original value — rules do not cascade). In place by default; `INTO @new` writes a new
-column. `ELSE` recodes any unmatched value (omit `ELSE` to keep them as-is).
+column (its name must not be the name of a data column). `ELSE` recodes any unmatched
+value (omit `ELSE` to keep them as-is).
 
 Labels are optional per rule. When any label is supplied (or the source was already
 categorical), `RECODE` rebuilds the target's value labels / stubs; a label-less
@@ -735,7 +746,9 @@ TABLE 'Q1 — Total' STUBS $q1 END TABLE  // non-speeder total, all genders
 COMPUTE @new = expression
 ```
 
-Builds a new **numeric** `@column` from an arithmetic expression.
+Builds a new **numeric** `@column` from an arithmetic expression. The `@new` name must
+not be the name of a data column (`COMPUTE @age = $age / 10` is an error: call it
+`@age_decades`).
 
 | Element | Supported |
 |---------|-----------|

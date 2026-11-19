@@ -4,6 +4,10 @@ RIM (Random Iterative Method) weighting — also called *raking* or *iterative
 proportional fitting* — adjusts each respondent's weight so that the weighted
 sample matches known population targets on several variables simultaneously.
 
+The weight's `@name` must not be the name of a data column: `RIM @weight` when the data
+already has a `$weight` column is an error (it would overwrite the data weight). Call it
+`@rim_weight`.
+
 ---
 
 ## Syntax

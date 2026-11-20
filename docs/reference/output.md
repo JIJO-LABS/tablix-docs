@@ -32,6 +32,13 @@ point (place it after your transforms).
 
     **`SOURCE_ONLY`** drops the dichotomies along with all other derived columns.
 
+    **A name that is already taken stops the export.** If the data already has a column
+    called `brand_1` (a source column, or any other column in the frame), `@brand` cannot
+    be written as `brand_1`: the real column would be overwritten by the 0/1 flags. The
+    export stops, before anything is written, and names every clash with the line of the
+    `EXPORT DATA` statement. Rename the `@` variable (for example `@brand_pick`), or write
+    `.parquet`, or use `SOURCE_ONLY`.
+
 ```mrs
 EXPORT DATA 'clean.sav'                              // full, metadata-complete
 EXPORT DATA 'clean.csv' CODEBOOK 'book.json'         // data + sidecar metadata

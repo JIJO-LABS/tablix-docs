@@ -212,13 +212,17 @@ hyperlinks to each table), followed by either:
   pct stats requested) keeps its own sig.
 
 The `single_sheet` Index has the columns *No.*, *Title*, *Base*, *N*, *Counts* and *Percentages*.
-**`N` is the unweighted number of respondents the table's Total column shows** for the first question,
+**`N` is the unweighted base the table's Total column shows** for the first question,
 and it stays that number when the Total column is hidden (`SHOW_TOTAL false`): it is then the base the
 Total column *would* have shown (everyone who answered the first question), not the base of the first
 banner column. Example: a concept test where each household sees one of four concepts and the banner is
 the four concepts with no Total, 600 households, 150 per concept. A table of everyone now reads
 **N = 600** (it used to read 150, the first concept's base). A question asked of one concept only reads
-the 150 households that were asked it (it used to read 0 whenever the first concept was not the one asked). `GRID` and `BREAKS` tables, and the `ADDTAB`,
+the 150 households that were asked it (it used to read 0 whenever the first concept was not the one asked).
+`N` counts what the table counts. On a stacked (`LEVEL`) table that does not use `BASE respondents`, it counts
+**rows** (one per evaluation), not people: 400 people who each rate three products read **N = 1,200**. Add
+`BASE respondents` to the table to count people (see [Choosing the base on a stacked table](tables.md#stacked-base)).
+`GRID` and `BREAKS` tables, and the `ADDTAB`,
 `BANKED_TABLE` and `MANIP` outputs, have no single such number and keep showing their first column's
 base. The `multi_sheet` Index has no `N` column.
 

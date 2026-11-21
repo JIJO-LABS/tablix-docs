@@ -757,7 +757,7 @@ not be the name of a data column (`COMPUTE @age = $age / 10` is an error: call i
 | Unary minus | `-expr` |
 | Numbers | integer or decimal literals |
 | Variables | `$source` or `@derived` (referenced earlier) |
-| Functions | `round(x)`, `abs(x)`, `sqrt(x)`, `min(a, b, …)`, `max(a, b, …)`, `count(@listvar)` |
+| Functions | `round(x)` (nearest whole number; .5 rounds away from zero: 2.5 gives 3, −2.5 gives −3, as in Excel), `abs(x)`, `sqrt(x)`, `min(a, b, …)`, `max(a, b, …)`, `count(@listvar)` |
 
 `count(@listvar)` returns the **number of selected codes** in a multi-response
 (`DERIVE` / `SPREAD`) list variable for each respondent — an empty list counts `0`.

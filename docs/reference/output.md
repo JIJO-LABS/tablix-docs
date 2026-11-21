@@ -450,7 +450,8 @@ sentence the deck prints.
 
 - **Applied, as in the text and HTML outputs:** decimals (`PCT_DECIMALS`, `COUNT_DECIMALS`,
   `MEAN_DECIMALS`, `DECIMALS`, and a row's `DISPLAY DECIMALS`) with half-away-from-zero
-  rounding; `PCT_SIGN`; `THOUSANDS_SEPARATOR` (display text only); `MIN_BASE` and
+  rounding (a weighted value that is exactly on a .5 tie, such as 62.5%, always rounds up, whatever
+  the float noise in its last digits, and in every output format); `PCT_SIGN`; `THOUSANDS_SEPARATOR` (display text only); `MIN_BASE` and
   `CONFIDENTIAL` masking; `BLANK_SUPPRESS`; `SUPPRESS`; `BASE_LABEL`; `PCT_ONLY` /
   `COUNT_ONLY` row properties; blank-versus-zero (a measured zero prints
   `0`, a cell with no base is empty).

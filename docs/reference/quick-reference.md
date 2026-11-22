@@ -89,7 +89,7 @@ END TABLE    END BANNER   END DEFINE   END RIM   END AUTOTAB   ENDNET   ENDHEADI
 | `mrscript export script.mrs out.csv` | Execute script, write CSV (`.xlsx` / `.html` / `.pptx` also supported) output |
 | `mrscript export script.mrs tables.jsonl` / `tables.md` | Execute script, write [AI-ready tables](output.md#ai): JSON Lines for code, Markdown to read as text. Values exactly as the deck shows them |
 | `mrscript export-data script.mrs out.sav` | Execute script, write transformed dataset |
-| `mrscript build script.mrst` | Transpile `.mrst` authoring file to `.mrs` |
+| `mrscript build script.mrst` | Transpile `.mrst` authoring file to `.mrs` (`--out FILE` also writes a copy there; `--no-header` leaves its `GENERATED` line out) |
 | `mrscript health script.mrs` | Run data-quality checks, print report |
 | `mrscript diff old.sav new.sav --key $id` | Compare two data deliveries |
 | `mrscript reconcile script.mrs plan.xlsx` | Validate script against a client tab plan |

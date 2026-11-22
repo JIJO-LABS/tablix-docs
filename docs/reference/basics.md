@@ -256,12 +256,16 @@ report.mrst  ──[transpile]──►  report.mrs  ──►  engine  ──�
 mrscript run   report.mrst          # Transpile to report.mrs, then run it.
 mrscript build report.mrst          # Transpile only (write report.mrs, no run).
 mrscript build report.mrst --map    # Also write report.mrs.map (source map).
+mrscript build report.mrst --out read_me.mrs --no-header   # Also write a tidy copy to read.
 ```
 
 `run` / `export` / `export-data` all accept either `.mrst` or `.mrs`. A `.mrst`
-always (re)writes its sibling `.mrs` beside it, headed
-`// GENERATED FROM <file> — do not edit`; that `.mrs` is the reproducible artifact
-(commit it).
+always (re)writes its `.mrs` into a `.tablix` folder beside it (`.tablix/report.mrs`),
+headed `// GENERATED FROM <file> — do not edit`; that `.mrs` is the reproducible
+artifact (commit it). To read what a `.mrst` expands to, `build --out FILE` writes a
+copy wherever you say, and `--no-header` leaves the `GENERATED` line out of that copy.
+The `.tablix` copy always keeps its header, because Run reads it. `--out` may not be a
+`.mrst` file or the `.tablix` copy, and its folder must exist.
 
 ### Two rules
 
@@ -353,9 +357,16 @@ keeps the full URL.
 |--------|---------|--------|
 | inline list | `#for q in q1, q2, q3` | each item, as `{q}` |
 | `#set` list | `#set bs = a,b` … `#for b in bs` | each item, as `{b}` |
+| one `{placeholder}` | `#for c in {row.codes}` (a plan cell `1, 2, 3`) | each item of the list in it, as `{c}` |
 | range `lo..hi` | `#for n in 1..20` | each integer, as `{n}` |
 | `SHEET("f","Tab")` | `#for row in SHEET("plan.xlsx","Tabs")` | one row per sheet row |
 | `CSV("f")` | `#for row in CSV("plan.csv")` | one row per CSV row |
+
+A source that is **exactly one `{placeholder}`** stands for the list in it, the same as
+`#set CODES = {row.codes}` followed by `#for c in CODES`: a tab-plan cell `1, 2, 3`
+gives three items, and a `#set` list gives its items. The cell is split on commas, so a
+text that holds a comma must be quoted in the cell (`"Is fresh, crisp", Other`). A source
+with more in it (`{a}, {b}`) still gives one item per part.
 
 Range bounds may be interpolated (`1..{hi}`) and may count down (`5..1`). SHEET / CSV
 paths resolve relative to the `.mrst` file; reading `.xlsx` needs openpyxl (CSV does

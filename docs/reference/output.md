@@ -509,7 +509,9 @@ mrscript project run project.yml              # Batch-run a YAML project of scri
 
 mrscript build script.mrst                    # Transpile a .mrst authoring file to
                                               #   its .tablix/*.mrs only (--map for a
-                                              #   source map; --set N=V pins a #set).
+                                              #   source map; --set N=V pins a #set;
+                                              #   --out FILE also writes a copy there,
+                                              #   --no-header drops its GENERATED line).
                                               #   run / export also accept .mrst and
                                               #   transpile first.
 

@@ -87,9 +87,12 @@ unweighted base.
 base** row is printed only when it is `true`. It changes the display only: the effective base is still computed and
 significance is still tested on it. It applies to every format (text, Excel, CSV, HTML, Markdown, JSON Lines, the AI
 export), and to `TYPE SUMMARY` tables. An unweighted table has no such row and is unaffected.
+Two edge cases: a table made from other tables (`ADDTAB`, `BANKED_TABLE`, `MANIP`) follows the setting of its
+**first source** (the first table named in `ADDTAB`, the stub table of `BANKED_TABLE`, the left table of `MANIP`), not
+of the others; and a `TYPE TURF` table has no effective base, so `true` prints nothing for it.
 
-**Which base does a number use? The key.** A weighted table prints three bases, so Tablix writes a
-short key itself, in the same place as the significance legend (the Percentage sheet, the text and HTML
+**Which base does a number use? The key.** A weighted table has three bases (two are printed unless
+`SHOW_EFFECTIVE_BASE true`), so Tablix writes a short key itself, in the same place as the significance legend (the Percentage sheet, the text and HTML
 output, the CSV `SIG_LEGEND` rows, the Markdown and JSON Lines legends, and the slide footnote):
 
 > Percentages are on Base (wtd). Significance is tested on an effective base that allows for the weights.

@@ -99,20 +99,34 @@ output, the CSV `SIG_LEGEND` rows, the Markdown and JSON Lines legends, and the 
 
 (Under `SHOW_EFFECTIVE_BASE true` the second sentence names the row: *"... tested on the Effective base."*)
 
+The first sentence is written only when the table prints **column percentages** (`col_pct` in `STATS`, and the
+cells really hold them). A table of counts, of means, of row percentages, or a `SUMMARY` of means with `sig` gets the
+significance sentence alone: *"Significance is tested on an effective base that allows for the weights."* When row
+percentages are printed beside the column ones, the sentence says *"Column percentages are on Base (wtd)."* (a row
+percentage is on the row's total).
+
 On a `TYPE SUMMARY` table it reads *"Percentages are on each statement's own weighted base. Significance
 is tested on each statement's effective base."* (a statement's percentages are not over the table's
-Base row; see `MEASURE base` in [special tables](tables.md#summary)). With `MIN_BASE` a second line says
-that cells are masked where **Base (unwtd)** is under the minimum, using the mask symbol you chose. The key
-follows a `BASE_LABEL` rename. An unweighted table has one **Base** row and no key. The full key is part of the
-significance legend. It replaces the older line "Significance computed on the effective base", which only the text,
-Excel and CSV outputs wrote.
+Base row; see `MEASURE base` in [special tables](tables.md#summary)). With `MIN_BASE` a further line says
+*"Counts and percentages are masked (<<) where Base (unwtd) is under N."*, using the mask symbol you chose (a
+mean or a `MEASURE base` row is never masked, and a table of means has no such line; `CONFIDENTIAL` cells are not
+explained). The key follows a `BASE_LABEL` rename. An unweighted table has one **Base** row and no key. The full key is
+part of the significance legend. It replaces the older line "Significance computed on the effective base", which
+only the text, Excel and CSV outputs wrote.
 
 **A weighted table without `sig`** has no significance legend, but it still prints several bases, so it gets a
 one-line key of its own: *"Percentages are on Base (wtd)."* (a `TYPE SUMMARY` says *"... each statement's own weighted
-base."*). It is written only when the table really shows column percentages (`col_pct` in `STATS`): a table of counts,
-of row percentages, of means, an `INDEX` table or a `SUMMARY` of means has none. It follows `BASE_LABEL`, appears in the
+base."*). It is written only when the table really shows column percentages (`col_pct` in `STATS`, not `STATS_ONLY`):
+a table of counts, of row percentages, of means, an `INDEX` table or a `SUMMARY` of means has none. With `MIN_BASE`
+the masking line above is written too, also on a table of counts (the Excel Count sheet carries it, because counts are
+masked). It follows `BASE_LABEL`, appears in the
 text, Excel (the Percentage sheet, not the Count sheet), CSV (row type `BASE_KEY`), HTML, Markdown and JSON Lines
 outputs, and is not on a PowerPoint slide. A table with `sig` carries the full key instead, never both.
+
+**`ADDTAB` does not merge `TYPE SUMMARY` tables.** Each statement of a summary has its own base, and `ADDTAB`
+recomputes percentages over the combined table base, which would print a wrong number (57 people of a statement
+answered by 140 is 40.7%, not 57 of the 163 in scope). The script is refused with a message that names the table.
+`MANIP` of summaries is unchanged (it works on the finished percentages).
 
 **Under a weight, a count is the weighted count.** A count row (`STATS n` or `STATS weighted_n`; on a
 weighted table the two are the same line) holds the weighted count in every format, so a count and its

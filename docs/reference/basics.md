@@ -265,7 +265,12 @@ headed `// GENERATED FROM <file> — do not edit`; that `.mrs` is the reproducib
 artifact (commit it). To read what a `.mrst` expands to, `build --out FILE` writes a
 copy wherever you say, and `--no-header` leaves the `GENERATED` line out of that copy.
 The `.tablix` copy always keeps its header, because Run reads it. `--out` may not be a
-`.mrst` file or the `.tablix` copy, and its folder must exist.
+`.mrst` file or the `.tablix` copy (checked by file identity, so another spelling of the
+same file, a link or a different case is refused too), its folder must exist, it must not
+be a folder, and an existing file is replaced only when it is a `.mrs` file (a `plan.csv`
+is never overwritten). An unwritable `--out` gives one clear line and leaves no `.tmp`
+file; the `.tablix` copy is written first. With `--map` the map describes the `.tablix`
+copy, which has the header line, so it is one line longer than a `--no-header` copy.
 
 ### Two rules
 
@@ -362,11 +367,17 @@ keeps the full URL.
 | `SHEET("f","Tab")` | `#for row in SHEET("plan.xlsx","Tabs")` | one row per sheet row |
 | `CSV("f")` | `#for row in CSV("plan.csv")` | one row per CSV row |
 
-A source that is **exactly one `{placeholder}`** stands for the list in it, the same as
-`#set CODES = {row.codes}` followed by `#for c in CODES`: a tab-plan cell `1, 2, 3`
-gives three items, and a `#set` list gives its items. The cell is split on commas, so a
-text that holds a comma must be quoted in the cell (`"Is fresh, crisp", Other`). A source
-with more in it (`{a}, {b}`) still gives one item per part.
+A source that is **exactly one `{placeholder}`**, or a part of a list that is exactly one
+(`{row.codes}, 97`), stands for the list in it, like `#set CODES = {row.codes}` followed by
+`#for c in CODES`: a tab-plan cell `1, 2, 3` gives three items (and `{row.codes}, 97` gives
+`1, 2, 3, 97`), and a `#set` list gives its items. The cell is split on commas, so a text
+that holds a comma must be quoted in the cell (`"Is fresh, crisp", Other`). To keep a whole
+cell as ONE item, quote the placeholder: `"{row.codes}"`. A part with more in it
+(`Other {row.name}`), a subscript (`{L[2]}`) and a range (`{a}..{b}`) are not split.
+Not the same as the `#set` work-around in two small ways: an empty cell is an error
+(`#for list is empty: {row.codes} has no items`) where `#set` gives one empty item, and an
+empty item inside a list is skipped. A bare `#for x in T` over a text value is ONE item
+(`#set T = "Is fresh, crisp"`), while `{T}` splits it at the comma.
 
 Range bounds may be interpolated (`1..{hi}`) and may count down (`5..1`). SHEET / CSV
 paths resolve relative to the `.mrst` file; reading `.xlsx` needs openpyxl (CSV does

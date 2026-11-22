@@ -66,7 +66,7 @@ The text-renderer legend names whichever strategy is active beneath the table.
 | `std_dev` | Standard deviation. |
 | `std_error` | Standard error of the mean. |
 | `median` | Median (50th percentile). |
-| `quartile(N)` | Nth percentile, N an integer 0–100 (e.g. `quartile(25)`). |
+| `quartile(N)` | Percentile row. **Only `quartile(25)` and `quartile(75)` are built today**; any other N prints no row and the run says so (see the note on requested stats below). |
 | `mode` | Most frequent value. |
 | `sum` | Σx. |
 | `sum_of_squares` | Σx². |
@@ -85,6 +85,18 @@ The text-renderer legend names whichever strategy is active beneath the table.
       did not score drops out of the mean. The code-as-score fallback applies only
       when the variable has *no* `SCORE` at all — it is whole-variable, not per-code.
     - Numeric variables use their raw values.
+    - **A stat you ask for that the table cannot produce is reported, not dropped.**
+      If a table's own `STATS` names a stat the table does not build (for example
+      `nps` on a `DERIVE` variable, `median` on a number in `STUBS`, `STATS_ONLY` on
+      a number in `STUBS`, or `quartile(1)`), the run adds a non-fatal advisory that
+      names the table, the stat and what to do instead. It reaches the desktop
+      Problems panel, `runner.warnings` and the audit manifest's `n_warnings`. A stat
+      that comes only from the global `FORMAT` and is not produced on some tables
+      (a global `STATS mean` on a multi-response variable with no `SCORE`) gets one
+      line per script, not one per table. `nps` also reports answers whose code lies
+      outside the NPS bands: a scale stored 1–11 needs
+      `NPS PROMOTERS 10..11 DETRACTORS 1..7`. The check covers ordinary banner
+      tables; `GRID`, `SUMMARY`, `TURF` and `BREAKS` tables are not checked yet.
     - Codes declared
       [`STATS_EXCLUDE`](setup-blocks.md#missing-vs-stats-exclude) are skipped by
       every summary stat while keeping their row and their place in the base — the

@@ -96,7 +96,7 @@ stdout, `mrscript export` writes the formatted file.
 | `config` | `object` | Effective `CONFIG` block values (see below) |
 | `run_summary.n_tables` | `int` | Number of tables produced |
 | `run_summary.n_warnings` | `int` | Number of non-fatal advisories emitted |
-| `run_summary.tables` | `object[]` | Per-table `{number, title, name}` |
+| `run_summary.tables` | `object[]` | Per-table `{number, title, name}`. A table tested at its own `SIG_CONFIDENCE` (a `TABLE` clause) also has `sig_confidence` (percent, strictest first, e.g. `[90.0, 80.0]`), written only when it differs from `config.sig_confidence` (default `[95.0]`), so the manifest never says the `CONFIG` level for a table that used another |
 
 ### `config` object
 

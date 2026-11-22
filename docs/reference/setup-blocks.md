@@ -13,7 +13,7 @@ Script-wide execution settings. All clauses are optional.
 | Clause | Values | Meaning |
 |--------|--------|---------|
 | `OUTPUT` | `text` \| `excel` | Default output format. `text` (default) = plain-text tables; `excel` = workbook. |
-| `SIG_CONFIDENCE` | `<pct> [, <pct>]` | Confidence level(s) in **percent** (not an alpha). One value (default `95`) = a single level. Two values (e.g. `99, 95`) = **dual** testing: letters significant at the higher level are UPPERCASE, those significant only at the lower level are lowercase. Each value must be `50 < pct < 100`. |
+| `SIG_CONFIDENCE` | `<pct> [, <pct>]` | Confidence level(s) in **percent** (not an alpha). One value (default `95`) = a single level. Two values (e.g. `99, 95`) = **dual** testing: letters significant at the higher level are UPPERCASE, those significant only at the lower level are lowercase. Each value must be `50 < pct < 100`. A single `TABLE` can set its own pair with a [`SIG_CONFIDENCE` clause](#sig-confidence-per-table); the table wins. |
 | `SIG_CORRECTION` | `none` \| `bonferroni` \| `bh` | Multiple-comparison correction across the column pairs in a comparison group. Default `none` (each pair tested at the raw level, matching Quantum/MRDCL/SPSS). `bonferroni` divides alpha by the number of testable pairs (controls the *family-wise* error rate). `bh` is the **Benjamini–Hochberg** false-discovery-rate step-up (controls the expected share of false positives among the *flagged* pairs — more powerful than Bonferroni when several true differences exist). |
 | `SIG_COMPARE` | `segment` \| `all` \| `total` \| `prior` | Which columns are compared. Default `segment`. |
 | `SIG_TAILS` | `1` \| `2` | One-tailed (directional) or two-tailed test. Default `2`. `1` uses the one-tailed critical value (more powerful for a directional hypothesis); the "higher than" lettering is preserved. Applies to **both** the proportion z-test and the mean t-test. |
@@ -96,6 +96,31 @@ CONFIG
   SUPPRESS_STACKED_SIG  true
 END CONFIG
 ```
+
+#### One table at its own confidence level {#sig-confidence-per-table}
+
+`CONFIG SIG_CONFIDENCE` is one pair for the whole script. When the tab plan wants one table at a different level
+(say a table at 90/80 while every other table stays at 95), put the clause on that table:
+
+```mrs
+CONFIG
+  SIG_CONFIDENCE 95                         // every table, unless it says otherwise
+END CONFIG
+
+TABLE 'Q51. Preference'
+  STUBS  $q51
+  BANNER $segment
+  SIG_CONFIDENCE 90, 80                     // this table only: UPPERCASE 90%, lowercase 80%
+  STATS  col_pct, n, sig
+END TABLE
+```
+
+The table's own value replaces the `CONFIG` one **for that table only**, and it takes the same values as `CONFIG` (one or two
+levels, each `50 < pct < 100`, the stricter written first or last). The table's legend names its own levels. The clause works on
+every table kind (ordinary, `GRID`, `SUMMARY`, `BREAKS`) and in an `AUTOTAB` block (every generated table gets it). It is a `TABLE`
+clause only: `CONFIG` stays the one global place, so `FORMAT SIG_CONFIDENCE` is a syntax error. With `CONFIG SIG_MARKERS plus_minus` a
+table may not name two levels (the `+` / `-` cannot show a second one). A table with its own level is recorded in the
+[audit manifest](audit-manifest.md) (`run_summary.tables[].sig_confidence`), because the manifest's `config` holds only the `CONFIG` level.
 
 **Worked example — choosing a significance strategy**
 
@@ -293,6 +318,7 @@ the table level ([§17](tables.md)). One `FORMAT` block per script.
 | `SORT [col_pct\|n\|row_pct] [ASC\|DESC] [ON $var=code\|TOTAL]` | Sort stub rows by any banner column and stat. Full syntax in [§17 Sorting rows](tables.md#sorting). |
 | `SHOW_TOTAL true\|false\|'Label'` | Show/hide/label the leading Total column ([§17](tables.md#total-column)). |
 | `SHOW_SCORES true\|false` | Append each leaf stub's contributing score value in brackets, on tables requesting `mean` ([§28](reference-details.md#show-scores)). Default `true`. |
+| `SHOW_EFFECTIVE_BASE true\|false` | Print the **Effective base** row under the base rows of a weighted table. Default **`false`** (hidden); it changes the display only, significance is still tested on it. See [the three bases](output.md#same-numbers). |
 | `PCT_SIGN true\|false` | Append the `%` sign to percentages (default `true`). `false` renders the bare number (`56` not `56%`). Text renderer only. |
 | `MAX_COL_WIDTH n` | Text-renderer header-wrap cap per data column. |
 | `DECIMALS n` | **Umbrella** decimal places — the fallback for percentages, counts **and** means when the specific directive below is not set. |

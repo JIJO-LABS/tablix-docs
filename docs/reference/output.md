@@ -71,23 +71,45 @@ The **base block** of a section, in every format:
 | Table | Rows, in this order |
 |-------|--------------------|
 | Unweighted | **Base**: the number of respondents |
-| Weighted (`WEIGHT`) | **Base (wtd)**: the sum of the weights, then **Base (unwtd)**: the respondents, then **Effective base** |
+| Weighted (`WEIGHT`) | **Base (wtd)**: the sum of the weights, then **Base (unwtd)**: the respondents, then, only under `SHOW_EFFECTIVE_BASE true`, **Effective base** |
 
 `BASE_LABEL "text"` renames the first of these rows (**Base** or **Base (wtd)**) in every format.
+
+**The three bases of a weighted table, in plain words.** With weights 1, 2, 1, 0.5, 1.5, 1, 2, 1 on 8 interviews:
+**Base (unwtd)** is the 8 people interviewed; **Base (wtd)** is the sum of the weights, 10, the size of the group the
+sample stands for (percentages and weighted counts are on this); the **Effective base** is (sum of weights)² ÷ (sum of
+squared weights) = 100 ÷ 14.5 = 6.9, the number of equal-weight interviews that would give the same precision. It is
+never above the unweighted base, and the more uneven the weights the lower it is. Significance is tested on it, so
+uneven weights do not make a difference look more certain than the data allows. `MIN_BASE` masking uses the
+unweighted base.
+
+**`SHOW_EFFECTIVE_BASE true|false`** (`FORMAT` or per `TABLE`; the table wins; default **`false`**): the **Effective
+base** row is printed only when it is `true`. It changes the display only: the effective base is still computed and
+significance is still tested on it. It applies to every format (text, Excel, CSV, HTML, Markdown, JSON Lines, the AI
+export), and to `TYPE SUMMARY` tables. An unweighted table has no such row and is unaffected.
 
 **Which base does a number use? The key.** A weighted table prints three bases, so Tablix writes a
 short key itself, in the same place as the significance legend (the Percentage sheet, the text and HTML
 output, the CSV `SIG_LEGEND` rows, the Markdown and JSON Lines legends, and the slide footnote):
 
-> Percentages are on Base (wtd). Significance is tested on the Effective base.
+> Percentages are on Base (wtd). Significance is tested on an effective base that allows for the weights.
+
+(Under `SHOW_EFFECTIVE_BASE true` the second sentence names the row: *"... tested on the Effective base."*)
 
 On a `TYPE SUMMARY` table it reads *"Percentages are on each statement's own weighted base. Significance
 is tested on each statement's effective base."* (a statement's percentages are not over the table's
 Base row; see `MEASURE base` in [special tables](tables.md#summary)). With `MIN_BASE` a second line says
 that cells are masked where **Base (unwtd)** is under the minimum, using the mask symbol you chose. The key
-follows a `BASE_LABEL` rename. An unweighted table has one **Base** row and no key. The key is part of the
-significance legend, so a table with no `sig` in its `STATS` has neither. It replaces the older line
-"Significance computed on the effective base", which only the text, Excel and CSV outputs wrote.
+follows a `BASE_LABEL` rename. An unweighted table has one **Base** row and no key. The full key is part of the
+significance legend. It replaces the older line "Significance computed on the effective base", which only the text,
+Excel and CSV outputs wrote.
+
+**A weighted table without `sig`** has no significance legend, but it still prints several bases, so it gets a
+one-line key of its own: *"Percentages are on Base (wtd)."* (a `TYPE SUMMARY` says *"... each statement's own weighted
+base."*). It is written only when the table really shows column percentages (`col_pct` in `STATS`): a table of counts,
+of row percentages, of means, an `INDEX` table or a `SUMMARY` of means has none. It follows `BASE_LABEL`, appears in the
+text, Excel (the Percentage sheet, not the Count sheet), CSV (row type `BASE_KEY`), HTML, Markdown and JSON Lines
+outputs, and is not on a PowerPoint slide. A table with `sig` carries the full key instead, never both.
 
 **Under a weight, a count is the weighted count.** A count row (`STATS n` or `STATS weighted_n`; on a
 weighted table the two are the same line) holds the weighted count in every format, so a count and its
@@ -158,6 +180,7 @@ sentinel column.
     | `BANNER_HEADER` | Column header label row |
     | `SECTION_LABEL` | Variable label at the start of each section |
     | `STUB` | A distribution row (count / pct / sig repeated per stat) |
+    | `BASE_KEY` | The one-line base key of a weighted table that shows percentages but has no `sig` (a table with `sig` has it in its `SIG_LEGEND` rows) |
     | `NET` | A NET row (aggregate of stubs; bold in formatters) |
     | `HEADING` | A display-only heading row (blank data cells) |
     | `BASE` | A base row of the section: one row (`stat` `n`), or on a weighted table `weighted_n` (Base (wtd)), `n` (Base (unwtd)) and `effective_n` (Effective base) — see [the same numbers in every format](#same-numbers) |
@@ -241,8 +264,8 @@ the 150 households that were asked it (it used to read 0 whenever the first conc
 base. The `multi_sheet` Index has no `N` column.
 
 The workbook shows the screen's numbers ([the same numbers in every format](#same-numbers)): under a
-weight the Count sheet holds **weighted counts** and the base block is *Base (wtd)*, *Base (unwtd)*,
-*Effective base*; `BASE_LABEL` renames the first base row; a `DISPLAY pct_only` / `count_only` row
+weight the Count sheet holds **weighted counts** and the base block is *Base (wtd)*, *Base (unwtd)* and,
+under `SHOW_EFFECTIVE_BASE true`, *Effective base*; `BASE_LABEL` renames the first base row; a `DISPLAY pct_only` / `count_only` row
 leaves the other kind blank (single-sheet keeps the row so the two sheets line up) or out
 (multi-sheet).
 
@@ -406,7 +429,7 @@ assistant can read the file with no other documentation. After it, each table is
 Useful `cell` fields:
 
 - **`row_kind`** — `base` (respondents), `base_weighted` (sum of weights), `base_effective`
-  (Kish effective base), `category`, `net`, `heading`, `value` (a mean-type row), or
+  (Kish effective base; only present under `SHOW_EFFECTIVE_BASE true`), `category`, `net`, `heading`, `value` (a mean-type row), or
   `summary` (Mean / Std Dev / NPS …). `row_parent` names the NET or heading a row belongs
   to, so a NET's members can be grouped without guessing from indentation.
 - **`stat`** — `n` (respondents; unweighted tables), `weighted_n` (the count on a weighted
@@ -474,7 +497,7 @@ sentence the deck prints.
   same numbers.
 - **Weighted tables:** the count is the weighted count, as on the screen (JSON Lines stat
   `weighted_n`; in the Markdown, the count in brackets). The base block is *Base (wtd)*, *Base
-  (unwtd)* (respondents) and *Effective base*, and the table says it is weighted.
+  (unwtd)* (respondents) and, under `SHOW_EFFECTIVE_BASE true`, *Effective base*, and the table says it is weighted.
 - **Labels are tidied:** surrounding whitespace is dropped and inner runs (tabs, line
   breaks) become one space, so a label stored as `Very Poor`, a tab, then `[1]` reads
   `Very Poor [1]`.

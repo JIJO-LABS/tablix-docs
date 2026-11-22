@@ -451,6 +451,8 @@ merge (`STATS + …`).
 | `NAME 'handle'` | Register this table in the table store under `handle` instead of its title, so a cross-table op ([§20](#cross-table)) can address it. Names must be unique within the script. |
 | `SHOW_TOTAL true\|false\|'Label'` | Show (default), hide, or relabel the leading Total column. The Total column is excluded from significance lettering. |
 | `SHOW_SCORES true\|false` | Append each leaf stub's contributing score value in brackets after its label (e.g. `Agree [4]`) — but **only on a table whose `STATS` requests `mean`**; a table without `mean` never shows brackets regardless. The value is the code's declared `SCORE`, or the raw code itself when the variable has no `SCORE` declared anywhere; a code left unscored on a partially-scored variable shows no bracket. NETs and HEADINGs are never annotated. Default **true**. |
+| `SHOW_EFFECTIVE_BASE true\|false` | Print the **Effective base** row under the base rows of a weighted table. Default **`false`** (hidden): a researcher who does not know the term is not shown a number they would ask about. Display only: it is still computed and significance is still tested on it. See [the three bases](output.md#same-numbers). |
+| `SIG_CONFIDENCE <pct> [, <pct>]` | This table's own significance level(s) in percent, replacing the `CONFIG` ones for this table only (one level, or two for UPPERCASE / lowercase letters). `TABLE` only: `FORMAT` does not take it. See [one table at its own confidence level](setup-blocks.md#sig-confidence-per-table). |
 
 Other `FORMAT` directives may also appear at table level (overriding the `FORMAT`
 default here): `BASE_LABEL`, `SIG_ROW_LABEL`, `BASE_DESCRIPTION` ([§19 Overriding the Base: line](#base-description)),

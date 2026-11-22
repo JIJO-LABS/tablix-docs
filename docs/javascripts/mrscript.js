@@ -36,7 +36,7 @@
         "STATS", "LEVEL", "BASE", "FILTER", "WEIGHT", "SHEET", "LABEL",
         "VALUE", "MISSING", "STATS_EXCLUDE", "SCORE", "POSITIONS", "INTO",
         "ELSE", "SET",
-        "KEEP", "DROP", "ROWS", "EMPTY", "SHOW_TOTAL", "STATS_ONLY",
+        "KEEP", "DROP", "ROWS", "EMPTY", "SHOW_TOTAL", "SHOW_EFFECTIVE_BASE", "STATS_ONLY",
         "ANSWERED_BASE", "BREAKS", "DISPLAY", "SUPPRESS", "CUMULATIVE", "REVERSE", "DECIMALS",
         "KEEP_IF_ZERO", "GRID", "DEFINE", "CALL",
         // summary / top-box battery tables

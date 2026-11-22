@@ -75,6 +75,20 @@ The **base block** of a section, in every format:
 
 `BASE_LABEL "text"` renames the first of these rows (**Base** or **Base (wtd)**) in every format.
 
+**Which base does a number use? The key.** A weighted table prints three bases, so Tablix writes a
+short key itself, in the same place as the significance legend (the Percentage sheet, the text and HTML
+output, the CSV `SIG_LEGEND` rows, the Markdown and JSON Lines legends, and the slide footnote):
+
+> Percentages are on Base (wtd). Significance is tested on the Effective base.
+
+On a `TYPE SUMMARY` table it reads *"Percentages are on each statement's own weighted base. Significance
+is tested on each statement's effective base."* (a statement's percentages are not over the table's
+Base row; see `MEASURE base` in [special tables](tables.md#summary)). With `MIN_BASE` a second line says
+that cells are masked where **Base (unwtd)** is under the minimum, using the mask symbol you chose. The key
+follows a `BASE_LABEL` rename. An unweighted table has one **Base** row and no key. The key is part of the
+significance legend, so a table with no `sig` in its `STATS` has neither. It replaces the older line
+"Significance computed on the effective base", which only the text, Excel and CSV outputs wrote.
+
 **Under a weight, a count is the weighted count.** A count row (`STATS n` or `STATS weighted_n`; on a
 weighted table the two are the same line) holds the weighted count in every format, so a count and its
 percentage always agree (144 of a weighted base of 304 is 47%). The respondent number is the

@@ -274,6 +274,7 @@ END TABLE
 | `MEASURE BOTTOM n ['Label']` | The **n lowest** scale points (`BOTTOM 2` = codes 1,2). |
 | `MEASURE NET (a, b, …) ['Label']` | An **explicit** code set — any box, not just the ends (e.g. `NET (3)` = the neutral midpoint). |
 | `MEASURE <stat> ['Label']` | A **score statistic** row — `mean`, `median`, `std_dev`, `std_error`, `sum`, `mode`. Uses the variable's `SCORE` (or code-as-score when none is declared). |
+| `MEASURE base ['Label']` | A **base** row per statement: the number of answers behind that statement's own percentages and means, per banner column (the weighted base under a weight, the respondent count otherwise). No percentage, no significance; the label defaults to "Base". |
 | `SCALE lo..hi` | The shared scale endpoints used by `TOP`/`BOTTOM`. Optional — see resolution. |
 
 **No heading row.** An explicit empty label (`MEASURE NET (3) ""`) drops the measure's
@@ -287,7 +288,11 @@ allowed when the table has a single `MEASURE`.
 `STATS`) over **each statement's own valid base**, so item-nonresponse on one
 statement never distorts the others. **Score rows** (`mean`/`median`/…) show a single
 value. The leading **Base** row shows the banner column universe (in-scope
-respondents).
+respondents). Because each statement's percentages use that statement's *own*
+base (different when a respondent skipped an item), add a `MEASURE base` block to
+print those bases: one row per statement, per banner column. It can sit anywhere
+among the measures; `MEASURE base ""` gives the flat item-per-row layout. It prints with the
+count decimals (`COUNT_DECIMALS`), and in the CSV its stat is `n` (or `weighted_n`).
 
 **`TOP`/`BOTTOM` scale resolution** (per statement), in precedence:
 

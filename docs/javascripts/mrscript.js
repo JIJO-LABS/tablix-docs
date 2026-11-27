@@ -40,7 +40,7 @@
         "ANSWERED_BASE", "BREAKS", "DISPLAY", "SUPPRESS", "CUMULATIVE", "REVERSE", "DECIMALS",
         "KEEP_IF_ZERO", "GRID", "DEFINE", "CALL",
         // summary / top-box battery tables
-        "SUMMARY", "STATEMENTS", "MEASURE", "TOP", "BOTTOM", "SCALE",
+        "SUMMARY", "STATEMENTS", "MEASURE",
         // TURF analysis (lowercase metric/method values stay un-keyworded)
         "TURF", "ITEMS", "SIZE", "REPORT", "METHOD",
         // CONFIG / FORMAT directives

@@ -139,8 +139,7 @@ NPS = %promoters − %detractors          (passives stay in the base)
 
 - **Bands** default to the classic 0–10 NPS. Override per `TABLE` or in `FORMAT` with
   `NPS PROMOTERS lo..hi DETRACTORS lo..hi` (passives are the codes in between; the base
-  spans `min(lo)..max(hi)`). The bands are **absolute code ranges**, independent of a
-  `SCALE` clause.
+  spans `min(lo)..max(hi)`). The bands are **absolute code ranges**.
 - **Decimals** default to **0** (NPS is a whole signed number); `NPS_DECIMALS n`
   overrides (falls back to the umbrella `DECIMALS`).
 - **Significance** (`STATS … sig`): NPS is a *difference of two proportions sharing one

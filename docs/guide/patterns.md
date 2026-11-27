@@ -528,22 +528,23 @@ See [GRID tables](../reference/tables.md#grid-tables).
 
 Consolidate a whole battery into one table: a block per measure (Top-2-Box, Mean, …),
 one row per statement, with demographic banner columns and significance. No need to
-pre-derive nets — `MEASURE` builds the boxes from the scale.
+pre-derive nets — `MEASURE NET (codes)` builds each box from the codes you list.
 
 ```mrs
 TABLE 'Agreement battery — summary' TYPE SUMMARY
-  STATEMENTS $s1, $s2, $s3
-  SCALE 1..5                       // shared scale; or omit if the vars carry value labels
-  MEASURE TOP 2    'Top-2-Box'
-  MEASURE BOTTOM 2 'Bottom-2-Box'
-  MEASURE mean     'Mean'
+  STATEMENTS $s1, $s2, $s3         // all on the same 1-5 scale
+  MEASURE NET (4, 5) 'Top-2-Box'
+  MEASURE NET (1, 2) 'Bottom-2-Box'
+  MEASURE mean       'Mean'
   BANNER  $gender
   STATS   col_pct, n, sig
 END TABLE
 ```
 
 Each statement's box % is over its own valid base; significance compares the banner
-columns. See [Summary tables](../reference/tables.md#summary).
+columns. For statements on different scales see
+[Boxes: you write the codes](../reference/tables.md#summary-boxes). See also
+[Summary tables](../reference/tables.md#summary).
 
 ---
 

@@ -256,10 +256,9 @@ the usual banner columns (Total + optional demographics) and significance.
 ```mrs
 TABLE 'Brand agreement — summary' TYPE SUMMARY
   STATEMENTS @easy, @value, @recommend   // the battery (rows); share a 1-5 scale
-  SCALE 1..5                              // shared scale endpoints (see resolution below)
-  MEASURE TOP 2     'Top-2-Box'           // % choosing the top 2 scale points
-  MEASURE BOTTOM 2  'Bottom-2-Box'
-  MEASURE NET (3)   'Neutral'             // an explicit code set
+  MEASURE NET (4, 5) 'Top-2-Box'          // % choosing code 4 or 5
+  MEASURE NET (1, 2) 'Bottom-2-Box'
+  MEASURE NET (3)    'Neutral'
   MEASURE mean      'Mean'                // a score statistic
   MEASURE median    'Median'
   BANNER  $gender                         // optional; a Total column is always shown
@@ -270,12 +269,9 @@ END TABLE
 | Clause | Meaning |
 |--------|---------|
 | `STATEMENTS v1, v2, …` | The battery variables — one **row** each, inside every measure block. Each uses its variable label as the row label. Categorical or numeric (not open-end). A run of consecutively-numbered variables can be written `@Q41_1 TO @Q41_13` instead of listing all of them ([below](#statements-range)). |
-| `MEASURE TOP n ['Label']` | The **n highest** scale points (e.g. `TOP 2` on a 1-5 scale = codes 4,5). |
-| `MEASURE BOTTOM n ['Label']` | The **n lowest** scale points (`BOTTOM 2` = codes 1,2). |
-| `MEASURE NET (a, b, …) ['Label']` | An **explicit** code set — any box, not just the ends (e.g. `NET (3)` = the neutral midpoint). |
+| `MEASURE NET (a, b, …) ['Label']` | A **box**: the share who gave any of these codes. You write the codes, e.g. `NET (4, 5)` for Top 2 Box on a 1-5 scale, `NET (3)` for the midpoint. |
 | `MEASURE <stat> ['Label']` | A **score statistic** row — `mean`, `median`, `std_dev`, `std_error`, `sum`, `mode`. Uses the variable's `SCORE` (or code-as-score when none is declared). |
 | `MEASURE base ['Label']` | A **base** row per statement: the number of answers behind that statement's own percentages and means, per banner column (the weighted base under a weight, the respondent count otherwise). No percentage, no significance; the label defaults to "Base". |
-| `SCALE lo..hi` | The shared scale endpoints used by `TOP`/`BOTTOM`. Optional — see resolution. |
 
 **No heading row.** An explicit empty label (`MEASURE NET (3) ""`) drops the measure's
 heading row: its statement rows print flat, at the top level, with nothing above them. It
@@ -284,7 +280,7 @@ own base). Leaving the label off (`MEASURE NET (3)`) keeps the derived heading, 
 Several measures need their headings to tell the rows apart, so an empty label is only
 allowed when the table has a single `MEASURE`.
 
-**Box rows** (`TOP`/`BOTTOM`/`NET`) show a percentage (and count, if `n` is in
+**Box rows** (`NET`) show a percentage (and count, if `n` is in
 `STATS`) over **each statement's own valid base**, so item-nonresponse on one
 statement never distorts the others. **Score rows** (`mean`/`median`/…) show a single
 value. The leading **Base** row shows the banner column universe (in-scope
@@ -294,13 +290,50 @@ print those bases: one row per statement, per banner column. It can sit anywhere
 among the measures; `MEASURE base ""` gives the flat item-per-row layout. It prints with the
 count decimals (`COUNT_DECIMALS`), and in the CSV its stat is `n` (or `weighted_n`).
 
-**`TOP`/`BOTTOM` scale resolution** (per statement), in precedence:
+#### Boxes: you write the codes {#summary-boxes}
 
-1. an explicit `SCALE lo..hi` → `TOP n` = the highest `n` of `lo..hi`;
-2. else the variable's **declared value codes** (so a labelled 1-5 scale needs no
-   `SCALE`);
-3. else the distinct values present in the data (data-dependent — prefer `SCALE` or
-   `NET` for numeric batteries with no value labels).
+A `NET` counts exactly the codes you list, in every statement of the table. So one
+`NET (4, 5)` line is right only while all the statements are on the same scale.
+
+**On a variable with value labels, only labelled codes count.** An answer whose code has
+no label is left out of the box **and** of the statement's base, as everywhere else in
+Tablix. With labels on the end points only (1 and 5), `NET (4, 5)` therefore counts code 5
+among the people who answered 1 or 5. Label every point first (`VARIABLE $q … VALUE 4 "…"`).
+
+**Different scales in one table** (say 5-point and 7-point items): give each variable
+its own box row, with the same stub code, and net that code:
+
+```mrs
+DERIVE @taste                                   // a 5-point item
+  STUB 1 WHERE $q1 = 1
+  // … points 2 to 5
+  STUB 97 "TOP 2 BOX" WHERE $q1 IN (4, 5)
+END DERIVE
+DERIVE @value                                   // a 7-point item
+  STUB 1 WHERE $q2 = 1
+  // … points 2 to 7
+  STUB 97 "TOP 2 BOX" WHERE $q2 IN (6, 7)
+END DERIVE
+TABLE 'Top 2 Box' TYPE SUMMARY
+  STATEMENTS @taste, @value
+  MEASURE NET (97) 'Top-2-Box'
+END TABLE
+```
+
+**A code that a statement does not have** shows 0%. Where a statement has **none** of
+the codes of a `NET`, the run reports it in the warnings (`MEASURE NET (97) shows 0%
+for @value …`). Nothing is checked on a number with no value labels, and a wrong code
+that does exist (for example `NET (4, 5)` on a 7-point item) cannot be noticed.
+
+!!! note "`TOP n`, `BOTTOM n` and `SCALE` were removed after 0.10.1"
+    They chose the codes by themselves and could pick the wrong ones without a word (a
+    "TOP 2 BOX" row or a "Don't know" code counted as scale points). A script that still
+    has them stops with a message that says what to write: with `SCALE 1..5`,
+    `MEASURE TOP 2` becomes `MEASURE NET (4, 5) "Top 2 Box"` and the `SCALE` line is
+    deleted. The message gives the ready line only when every statement's labels fit it.
+    Otherwise (for example a 7-point item among 5-point ones) it lists each statement's
+    codes and leaves the line to you. The desktop app's check while you type has no data
+    yet, so **run the script** before you change it.
 
 Significance runs over the **banner columns** as for a normal table (box rows:
 column-proportion *z*; Mean rows: Welch *t*). `SORT` reorders statements within each
@@ -333,10 +366,9 @@ it would be if you had typed the list out by hand.
 ```mrs
 TABLE 'Rating battery — summary' TYPE SUMMARY
   STATEMENTS $rate_1, $rate_2, $rate_3
-  SCALE 1..5
-  MEASURE TOP 2    'Top-2-Box'
-  MEASURE BOTTOM 2 'Bottom-2-Box'
-  MEASURE mean     'Mean'
+  MEASURE NET (4, 5) 'Top-2-Box'
+  MEASURE NET (1, 2) 'Bottom-2-Box'
+  MEASURE mean       'Mean'
   STATS col_pct, n
 END TABLE
 ```
@@ -1016,7 +1048,7 @@ would for a hand-written table with no such clause. So an `AUTOTAB` clause
 inherited from `FORMAT`.
 
 The **row-axis / TYPE clauses** — `STUBS`, `DISTRIBUTION`, `ADD`, `COLUMN`,
-`TYPE GRID`, `TYPE SUMMARY`, `STATEMENTS`, `MEASURE`, `SCALE` — are **not** allowed
+`TYPE GRID`, `TYPE SUMMARY`, `STATEMENTS`, `MEASURE` — are **not** allowed
 inside `AUTOTAB` (the validator rejects them): `VARS()` *is* the row axis, and every
 generated table is a plain `STUBS <variable>` banner table. An `AUTOTAB` inside a
 `SCOPE` inherits that scope's filter and base label like any table.

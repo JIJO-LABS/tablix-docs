@@ -265,6 +265,24 @@ hyperlinks to each table), followed by either:
   Percentage copy keeps sig in full. A table on the Count sheet only (no
   pct stats requested) keeps its own sig.
 
+**Long headings and labels** make their row taller instead of being cut off:
+
+- a **column heading** wraps in its column (12 wide) and a **group heading** wraps in the width of all the
+  columns under it. The two heading rows keep their usual height when every heading is short;
+- a **row label** longer than column A (35 wide) wraps, and only that row grows. A long **base text** on the
+  Index wraps too;
+- column widths do not change. A row has one height, so on a wide banner one long heading far to the right
+  makes the whole heading row taller;
+- Excel breaks lines a little differently at each screen scaling. The heights are fitted so that a row is not a
+  line short at 100% or 125%, so now and then a row has a spare line, more often with non-Latin alphabets;
+- on a `single_sheet` workbook **column A is frozen** on the Count and Percentage sheets, so the row labels
+  stay on screen when you scroll right. `multi_sheet` freezes the headings and column A, as before, except when
+  the headings are taller than 250 points in all: then only column A is frozen, so the rows can still be
+  scrolled.
+
+Not fitted yet, and still cut when long: the table's title and base line (on a narrow table), the row that names
+a variable when a table has several, `HEADING` rows, and a cell with many significance letters (eight or more).
+
 The `single_sheet` Index has the columns *No.*, *Title*, *Base*, *N*, *Counts* and *Percentages*.
 **`N` is the unweighted base the table's Total column shows** for the first question,
 and it stays that number when the Total column is hidden (`SHOW_TOTAL false`): it is then the base the

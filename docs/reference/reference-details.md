@@ -294,7 +294,14 @@ base_n[col] = count( banner_col_mask AND valid_mask )
 ```
 
 `valid_mask` = is-not-null **AND** not in a declared `MISSING` code. System missing
-(`.`) is always excluded.
+(`.`) is always excluded. This holds for a number as a row variable too: a declared code
+leaves its base, mean, standard deviation, significance test and NPS row (Tablix 0.10.3
+and earlier counted it there). Marks of *user-defined missing* inside an SPSS file are not
+applied by themselves: declare the codes with `VARIABLE … MISSING`.
+
+Some steps still carry the raw codes along without the `MISSING` mark, so they are counted
+again: `COMPUTE`, `RECODE … INTO`, `AGGREGATE`, and a `STACK` where only a later `MAP` source
+declares it (the target takes the first source's mark: declare it on every source).
 
 **Weighted base** — when `WEIGHT` is active, three base rows appear, in this order and with these
 labels in every output format ([the same numbers in every format](output.md#same-numbers)):

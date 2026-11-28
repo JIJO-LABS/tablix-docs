@@ -85,6 +85,19 @@ the underlying column name (`$gender` → column `gender`).
     script adds itself with `MERGE` or `AGGREGATE`. Names are case-sensitive, so `@Brand`
     next to `$brand` is allowed.
 
+!!! warning "A script variable is made once"
+    The same holds between script variables. A name made twice stops the script, whichever statements make it
+    (`DERIVE`, `SPREAD`, `COMBINE`, `COMPUTE`, `RIM`, `STACK` and the columns it makes, `APPEND … AS`, or
+    `EDIT` / `RECODE … INTO`), so the later one can never silently replace the earlier one:
+
+    ```text
+    '@m' is made twice: SPREAD (line 3), then COMPUTE (line 4). The later one replaces the earlier one without a
+    message. Give one of them another name. (line 4)
+    ```
+
+    Two exceptions, both about stacked data: two `STACK`s may each make a column of the same name, and a `DERIVE`
+    below a `STACK` may replace a column that `STACK` made (stacked tables then read the `DERIVE`).
+
 **Naming rules**
 
 - First character after the prefix must be a letter or underscore.

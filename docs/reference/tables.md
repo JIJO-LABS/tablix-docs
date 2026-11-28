@@ -153,6 +153,33 @@ BANNER @ageband                // single segment
 BANNER @ageband, $gender       // two side-by-side segments
 ```
 
+!!! warning "A variable with no answer rows stops the run"
+    A banner or a stub is built from a variable's **answer rows** (its labelled codes). When a variable has answers
+    but no answer rows, and the table would therefore lose them, the run stops and says what to do. Examples:
+
+    - a **text column** of an SPSS file (as rows, use `DISTRIBUTION $who` to list its values);
+    - a **number with no value labels** in a banner (make bands with `DERIVE`);
+    - a column holding only **0 and 1** with no labels, shown with counts or percentages only;
+    - a variable whose labelled codes are all declared `MISSING`.
+
+    ```text
+    Table 1: $who is a text column, so it has no answer rows and the banner columns would be missing. A condition
+    cannot test text: bring a number code for each text into the data with MERGE, then make the columns from that
+    number with DERIVE. (line 4)
+    ```
+
+    A banner or `BREAKS` variable always stops: it would make no columns. For rows, `GRID` columns and `ADD` of a
+    column of **numbers**, a table that asks for a figure worked out from the values (`mean`, `median` …) still prints
+    it and runs; it then shows that figure only, without counts or percentages. A text column has no such figures and
+    always stops. In a `GRID` or `ADD` that also holds a variable *with* answer rows, counts and percentages would be
+    wrong for the one without (0 in a grid, half the percentage in an `ADD`), so that stops too.
+
+    Nothing is lost, so nothing stops, for: a number as a row variable (Mean and Std Dev), `DISTRIBUTION` of any
+    column, a `TYPE SUMMARY` statement, and a column with no data at all, as happens early in fieldwork. A text
+    column of a CSV or Parquet file has answer rows. In an `AUTOTAB` block one of its **row** variables gives a warning
+    instead of stopping the run; a bad banner stops as in any table. An `EXPORT DATA` placed below a failing table is
+    not run; one placed above it has already written its file.
+
 #### Nested (crossed) columns — `BANNER $a BY $b [BY $c …]`
 
 Crosses variables into a column hierarchy with stacked header bands, to any depth. As

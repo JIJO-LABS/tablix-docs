@@ -351,6 +351,20 @@ The join key's data type is coerced to match the working frame's automatically (
 Excel key read as text/float still matches an integer id). A merged column that
 clashes with an existing one, with no `PREFIX`, is an error.
 
+!!! warning "A repeated key stops the run (`MERGE` and `JOIN`)"
+    If the added file holds a key **more than once** for a value that is in the data, the join would add a row for
+    each repeat, so counts and bases would grow. The run stops:
+
+    ```text
+    MERGE "coding.xlsx": the key %RESPID is in that file more than once for 2 values that are in the data
+    (for example 1, 3). The join would add a row for each repeat, so counts and bases would grow. Make the key
+    unique in that file. (line 3)
+    ```
+
+    A repeat that matches nobody, and rows with an empty key, add nothing and are ignored. If you want one row per
+    visit or purchase, prepare that file as the `SOURCE` itself, or keep one row per person in the added file
+    before using it.
+
 ```mrs
 SOURCE "survey.sav"
 %RESPID = $SbjNum

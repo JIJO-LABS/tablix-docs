@@ -87,8 +87,8 @@ The text-renderer legend names whichever strategy is active beneath the table.
     - Numeric variables use their raw values.
     - **A stat you ask for that the table cannot produce is reported, not dropped.**
       If a table's own `STATS` names a stat the table does not build (for example
-      `nps` on a `DERIVE` variable, `median` on a number in `STUBS`, `STATS_ONLY` on
-      a number in `STUBS`, or `quartile(1)`), the run adds a non-fatal advisory that
+      `nps` on a `DERIVE` variable, `median` on a number in `STUBS`, or
+      `quartile(1)`), the run adds a non-fatal advisory that
       names the table, the stat and what to do instead. It reaches the desktop
       Problems panel, `runner.warnings` and the audit manifest's `n_warnings`. A stat
       that comes only from the global `FORMAT` and is not produced on some tables

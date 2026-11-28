@@ -345,6 +345,40 @@ stack name (it becomes the level column), each `MAP` target and, in a multi-axis
 `STACK`, the generated `@<axis>_n` and `@<stack>_slot`
 (see [Variable naming](basics.md#3-variable-naming-conventions)).
 
+### Put data steps above the STACK {#before-a-stack}
+
+A `STACK` block copies the data **as it is at that line**. A data step written below it
+changes the respondent data only, not the stacked copy. So write cleaning steps, and
+every variable a stacked table needs, **above** the first `STACK`:
+
+```mrs
+DROP ROWS WHERE $speeder = 1                 // 1. clean the data
+EDIT $age SET 99 WHERE $age > 120
+DERIVE @sex_hdr                              // 2. variables stacked tables will use
+  STUB 1 'Male'   WHERE $gender = 1
+  STUB 2 'Female' WHERE $gender = 2
+END DERIVE
+
+STACK @trial                                 // 3. the copy is taken here
+  MAP @overall FROM $I_1_Q1, $I_2_Q1
+END STACK
+
+TABLE 'Overall' STUBS @overall BANNER @sex_hdr END TABLE
+```
+
+Tablix stops the run, and says what to move, instead of giving numbers from the old copy:
+
+| Written below a `STACK` | What happens |
+|---|---|
+| `KEEP ROWS`, `DROP ROWS`, `AGGREGATE`, `MERGE … TYPE inner` | **Error.** Stacked tables would still count the removed rows. |
+| `EDIT` or `RECODE` that changes a column in place (a data column, or an `@` variable made above the `STACK`) | **Error.** Stacked tables would keep the old values. `INTO @new` is allowed. |
+| A step that creates a name the stacked data already has: a variable made above the `STACK`, or one of the stack's own `MAP` targets | **Error.** Stacked tables would keep the old one. Use a new name. |
+| A `MERGE` whose file repeats a key, so that rows are added | **Error** when the run reaches it. |
+| A new variable (`DERIVE`, `COMPUTE`, `SPREAD`, `COMBINE`, `RIM`, `INTO @new`, `MERGE`) | Allowed, and usable on respondent tables. A stacked table, or a stacked `DERIVE`, that names it is an **error**. |
+
+A `DERIVE` below the `STACK` that reads the stack's own `MAP` targets is different: it is
+built inside the stacked data (see [Stacked DERIVEs](#stacked-derives) below).
+
 ### 12a. Single-axis STACK — uniform rotation
 
 Use this form when all `MAP` variables cycle through the same set of positions (a
@@ -419,7 +453,7 @@ TABLE 'Reach (unique respondents)'
 END TABLE
 ```
 
-#### Stacked DERIVEs — adding NETs / scores after the STACK
+#### Stacked DERIVEs — adding NETs / scores after the STACK {#stacked-derives}
 
 A `DERIVE` block placed **after** a `STACK` may reference that stack's `MAP` target
 variables in its conditions. The engine detects this automatically and compiles the
@@ -646,6 +680,7 @@ Sets a column's value to `value` for the rows matching the condition. **In place
 default (the source column's values change); `INTO @new` writes a new derived column
 and leaves the source untouched. The `@new` name must not be the name of a data column
 (`EDIT $age … INTO @age` is an error; leave `INTO` out to change `$age` itself).
+An in-place `EDIT` must be written [above any `STACK` block](#before-a-stack).
 
 ```mrs
 EDIT $age SET 999 WHERE $age > 120              // flag impossible ages
@@ -671,7 +706,8 @@ RECODE $var (sources -> dest ['label']) ... [ELSE n ['label']] [INTO @new]
 Remaps sets of old codes to new ones **simultaneously** (every branch tests the
 original value — rules do not cascade). In place by default; `INTO @new` writes a new
 column (its name must not be the name of a data column). `ELSE` recodes any unmatched
-value (omit `ELSE` to keep them as-is).
+value (omit `ELSE` to keep them as-is). An in-place `RECODE` must be written
+[above any `STACK` block](#before-a-stack).
 
 Labels are optional per rule. When any label is supplied (or the source was already
 categorical), `RECODE` rebuilds the target's value labels / stubs; a label-less
@@ -700,6 +736,9 @@ DROP ROWS WHERE condition
 Filters respondents at the **data level** — the row is physically removed from the
 working dataset. Every downstream `DERIVE`, `STACK`, table, base count, and export
 reflects it. Place it once and it is in force for the entire rest of the script.
+
+It must be written **above any `STACK` block** (see
+[Put data steps above the STACK](#before-a-stack)); below one it is an error.
 
 - `KEEP ROWS` — keep only rows matching the condition; all others are removed.
 - `DROP ROWS` — remove rows matching the condition; all others are kept.

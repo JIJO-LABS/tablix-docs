@@ -489,7 +489,8 @@ does not print. Each key appears only when it applies, so a file that uses none 
                      "not_pairable": 0, "weighted": 0, "other": 0, "unpaired_rows": 0}}
 ```
 
-`pairs` counts **distinct column pairs per section**, never per row; every compared pair lands in
+`pairs` counts **distinct column pairs per section**, never per row. A column with nobody in it is
+never tested, so no pair with it is counted. Every other compared pair lands in
 exactly one of: `paired` (a paired statistic), `degenerate` (paired, but no verdict on any row:
 no differing responses), `same_rows` (a subgroup beside its total: the overlap test),
 `independent` (no respondent in common: exact), `not_pairable` (a column counts a respondent

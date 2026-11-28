@@ -474,7 +474,7 @@ merge (`STATS + …`).
 
 | Clause | Meaning |
 |--------|---------|
-| `STATS_ONLY` | Render only the summary rows (mean, std dev, …); suppress the distribution rows (still computed internally). |
+| `STATS_ONLY` | Render only the summary rows (mean, std dev, …); suppress the distribution rows (still computed internally). A number in `STUBS` has no distribution rows, so its Mean / Std Dev rows show as usual. |
 | `FILTER condition` | Row filter for this table only; AND-ed with any enclosing `SCOPE`. |
 | `WEIGHT $weight_var` | Apply probability weights to this table (adds weighted_n / effective base). |
 | `LEVEL @stack_name` | Tabulate against a stacked frame ([§12](data-preparation.md#stack)). Optional — inferred from the variable names when omitted; explicit `LEVEL` takes precedence. |

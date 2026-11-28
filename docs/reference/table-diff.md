@@ -3,8 +3,8 @@
 **`mrscript table-diff A B`** compares **two sets of produced tables** — this
 week's run vs last week's, a script before and after an edit — and reports what
 changed: tables added or removed, structural changes (banner columns, stub rows,
-stats, base description), and per-cell value shifts (n / col_pct / mean) that
-exceed configurable thresholds.
+stats, base description), and value shifts (counts, percentages, means, standard
+deviations and the base rows) that exceed configurable thresholds.
 
 This is **not** a data diff (`mrscript diff` — Feature #10 — compares two
 *datasets*). `table-diff` compares two *output runs*: the `TableResult`s that a
@@ -46,8 +46,15 @@ When a `.mrs` script is given, `mrscript table-diff` runs the script through the
 engine and then diffs the resulting stores — equivalent to `mrscript run` followed
 immediately by a diff. A saved store is loaded directly with no re-tabulation.
 
-Persist a run for later comparison with **`mrscript export-store`** (or in-script
-via `TABLE SAVE "handle"`), or by using the `--out-store` flag on `mrscript run`.
+Persist a run for later comparison with the `--out-store DIR` flag on `mrscript run`
+or `mrscript export`.
+
+A store keeps the numbers and what is needed to print the tables again (row types,
+column headings, significance settings). A store saved by **Tablix 0.10.2 or earlier**
+has no column headings for a `GRID`, `TURF` or `BANKED_TABLE` table, so those cells
+cannot be matched: the report says **Cells NOT compared** for that table, as an error.
+Save such a store again. (Up to 0.10.2 these tables were reported as having no
+differences, whatever the numbers.)
 
 ---
 
@@ -89,17 +96,51 @@ are *removed*; unmatched B-tables are *added*.
 | `section_label_changed` | `warn` |
 | `stats_changed` | `info` |
 | `base_changed` | `info` |
+| `group_changed` | `warn` |
+| `row_changed` | `warn` |
+| `cells_not_compared` | `error` |
 
-### Cell shifts (within common rows × columns)
+`group_changed` means rows or columns were found by name under another heading (a
+renamed `MEASURE` label or banner variable). Their numbers are still compared.
+`row_changed` means a line is a heading on one side only (a `HEADING` turned into a
+`NET`, or back). `row_added` / `row_removed` also cover the summary rows under a
+table (`Mean`, `Std Dev`, `Median` …), so a renamed one shows as removed and added.
+
+### How rows and columns are matched {#matching}
+
+A row or column is identified by its **heading**, its **label** and its **order**, not
+by its label alone, because labels repeat: a `SUMMARY` table lists its statements again
+under every measure, a nest (`STUBS $q BY $g`) repeats the answers under every outer
+answer, and a nested banner repeats them under every group.
+
+1. Same heading, label and order: the same row or column, wherever it moved to.
+2. Otherwise the same label, taken in order (a renamed heading, or a store with no
+   banner headings saved by Tablix 0.10.2 or earlier).
+3. What is left is reported as added or removed.
+
+The report writes the heading before a label only when the label alone would not say
+which one is meant: `row 'Lowest › q1' / col 'Total'`.
+
+Sections (one per `STUBS` variable) are matched by position.
+
+!!! warning "Tablix 0.10.2 and earlier"
+
+    Rows and columns were matched by label, so only one of each repeated label was
+    compared, and base rows and `Std Dev` rows were not compared at all. A `SUMMARY`
+    table with two or more measures could change and still report **no differences**.
+
+### Cell shifts (within matched rows × columns)
 
 | Stat | Threshold | Severity |
 |------|-----------|----------|
-| `col_pct` | `--pct-threshold` (default 2.0 pp) | `warn` if > threshold; `info` if ≤ threshold but ≠ 0 |
+| `col_pct`, `row_pct` (only when `STATS` prints it) | `--pct-threshold` (default 2.0 pp) | `warn` if > threshold; `info` if ≤ threshold but a real change (float noise is ignored) |
 | `n` | `--n-threshold` (default 0 = any change) | `warn` |
 | `weighted_n` | `--weighted-n-threshold` (default 0.5) | `warn` |
-| `mean` (summary rows) | `--mean-threshold` (default 0.1) | `warn` |
+| `mean`, `std_dev` (number tables, `SUMMARY` value rows, summary rows) | `--mean-threshold` (default 0.1) | `warn` |
+| `base_n` (the `Base` row) | `--n-threshold` | `warn` |
+| `base_weighted_n` (`Base (wtd)`), `base_effective_n` (only when printed) | `--weighted-n-threshold` | `warn` |
 
-Cells where one side had a value and the other has `None` are flagged
+A value that one side has and the other leaves blank is flagged
 `appeared` / `disappeared` (level `warn`).
 
 ---
@@ -210,13 +251,25 @@ mrscript table-diff baseline/ new_run/ --fail-on warn
 
 ## Notes
 
-- Cell alignment is **by label**, not by position — reordering banner columns or
-  stub rows does not create spurious cell shifts.
+- Reordering banner columns or stub rows does not create cell shifts (see
+  [How rows and columns are matched](#matching)).
 - Summary rows (Mean, Std Dev, …) are compared against the `mean_threshold`.
 - The diff reads already-produced `TableResult` objects; it does not re-run the
   tabulation engine, apply weighting, or recompute significance.
-- Significance flags are not compared (they depend on base sizes that may naturally
-  drift between waves).
-- GRID / SUMMARY / DISTRIBUTION / cross-table outputs (ADDTAB / MANIP / BANKED) are
-  matched by title/number but cell comparisons work only on standard banner tables
-  with numeric `col_pct` / `n` cells.
+- Significance letters are **not** compared (they depend on base sizes that may
+  naturally drift between waves), so two runs that differ only in their letters, for
+  example after a `SIG_CONFIDENCE` change, report no differences.
+- Every table kind is compared: banner, `SUMMARY`, `GRID`, `TURF`, `DISTRIBUTION` and
+  the cross-table outputs.
+
+!!! warning "The report compares the stored numbers, not the printed page"
+
+    It also reports changes in numbers a table does **not** print: rows hidden by
+    `SUPPRESS`, the distribution rows of a `STATS_ONLY` table, the unweighted cell
+    counts of a weighted table, and **cells masked by `MIN_BASE` or `CONFIDENTIAL`,
+    whose real figures appear in the report**. Do not pass a diff report to anyone who
+    may not see those figures.
+
+    The other way round, a change of display settings alone is not reported:
+    `SUPPRESS`, `DISPLAY pct_only`, `MIN_BASE`, `CONFIDENTIAL`, decimals, or a renamed
+    table-level `HEADING`.

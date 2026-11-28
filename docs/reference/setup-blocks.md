@@ -372,6 +372,31 @@ that carry no labels. All clauses are optional. A sidecar `CODEBOOK`
 | `SCORE code = value` | Numeric score for a code, used by mean / std summaries. Declaring *any* `SCORE` switches the variable to **explicit mode** — a code you don't score drops out of the mean. With **no** `SCORE` at all, each code is its own score (code-as-score). |
 | `SCORE lo..hi` | Shorthand for the **identity** run — `SCORE 1..5` is exactly `SCORE 1 = 1  SCORE 2 = 2  SCORE 3 = 3  SCORE 4 = 4  SCORE 5 = 5`. Use it to put a scale into explicit mode without writing a line per point; a scale that needs *different* point values (reverse scoring, `1 = -100`) still needs the `code = value` form. |
 
+### Answers with no value label {#unlabelled-codes}
+
+A variable that has value labels is tabulated on its **labelled codes only**. An answer
+whose code has no label (and is not declared `MISSING`) is not a row and **is not in the
+base**. With only the end points of a scale labelled (1 and 5), the 2s, 3s and 4s are
+all left out.
+
+The run says so, once per variable, without changing any number:
+
+> `$q1: 7 of 12 answers have a code with no label (2, 3, 4), so they are not in the base
+> (Table 1). Add labels for them, declare them MISSING, or use DISTRIBUTION $q1 to show
+> every value.`
+
+In a nested table (`STUBS $a BY $b`) and in a `GRID` with `ANSWERED_BASE false` those
+answers have no row but **stay in the base**, so the rows do not add up to 100%; the
+message says that instead. When a variable is in several tables, the count given is the
+largest loss and the message names that table.
+
+It covers `STUBS` (also nested), `ADD`, `GRID` columns and `SUMMARY` statements, within
+the table's filter (also a table that `SUPPRESS_EMPTY` then leaves out), and `SPREAD` /
+`COMBINE`, whose code list is built from the labels.
+`DISTRIBUTION`, `DERIVE` and `SPREAD … CODES` are not reported: they show every value, or
+you listed the codes yourself. A code the SPSS file marks as missing is reported too
+unless the script declares it `MISSING`, because SPSS missing marks are not read.
+
 ### `MISSING` vs `STATS_EXCLUDE` {#missing-vs-stats-exclude}
 
 Both remove a code from the mean; they differ in what else goes with it.
